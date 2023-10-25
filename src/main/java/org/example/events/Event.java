@@ -1,5 +1,6 @@
 package org.example.events;
 
 
-public interface Event{}
+public class Event {
 
+}

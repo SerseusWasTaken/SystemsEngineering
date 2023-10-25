@@ -10,7 +10,7 @@ public class CommandHandler implements Commands {
 
     @Override
     public void createItem(String id, int[] position, int value) {
-
+        eventStore.storeEvent(new CreateEvent(id, position, value));
     }
 
     @Override
