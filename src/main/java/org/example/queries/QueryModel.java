@@ -25,10 +25,14 @@ public class QueryModel {
         data.replace(id, newItem);
     }
 
-    void moveLocation(String id, int[] vector) {
+    public void moveLocation(String id, int[] vector) {
         MovingItemImpl oldItem = (MovingItemImpl) data.get(id);
+        int[] newLocation = new int[oldItem.getLocation().length];
+        for (int i = 0; i < oldItem.getLocation().length; i++) {
+            newLocation[i] = oldItem.getLocation()[i] + vector[i];
+        }
         MovingItemImpl newItem = new MovingItemImpl(oldItem.getName(),
-                vector, oldItem.getNumberOfMoves() + 1, oldItem.getValue());
+                newLocation, oldItem.getNumberOfMoves() + 1, oldItem.getValue());
         data.replace(id, newItem);
     }
 
