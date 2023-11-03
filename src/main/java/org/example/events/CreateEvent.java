@@ -1,9 +1,9 @@
 package org.example.events;
 
 public class CreateEvent extends Event {
-    String name;
-    int[] location = null;
-    int value = 0;
+    public String name;
+    public int[] location = new int[] {0, 0, 0};
+    public int value = 0;
 
     public CreateEvent(String name, int[] location, int value) {
         this.name = name;

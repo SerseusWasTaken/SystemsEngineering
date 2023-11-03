@@ -1,39 +1,38 @@
 package org.example;
 
 import org.example.api.Commands;
-import org.example.api.EventStore;
-import org.example.events.*;
+import org.example.domain.DomainModel;
 
 public class CommandHandler implements Commands {
 
-    EventStore eventStore;
+    DomainModel domainModel;
 
-    public CommandHandler(EventStore eventStore) {
-        this.eventStore = eventStore;
+    public CommandHandler(DomainModel domainModel) {
+        this.domainModel = domainModel;
     }
 
     @Override
     public void createItem(String id) {
-        eventStore.storeEvent(new CreateEvent(id));
+        domainModel.createItem(id);
     }
 
     @Override
     public void createItem(String id, int[] position, int value) {
-        eventStore.storeEvent(new CreateEvent(id, position, value));
+        domainModel.createItem(id, position, value);
     }
 
     @Override
     public void deleteItem(String id) {
-        eventStore.storeEvent(new DeleteEvent(id));
+        domainModel.deleteItem(id);
     }
 
     @Override
     public void moveItem(String id, int[] vector) {
-        eventStore.storeEvent(new MoveEvent(id, vector));
+        domainModel.moveItem(id, vector);
     }
 
     @Override
     public void changeValue(String id, int newValue) {
-        eventStore.storeEvent(new ChangeValueEvent(id, newValue));
+        domainModel.changeValue(id, newValue);
     }
 }

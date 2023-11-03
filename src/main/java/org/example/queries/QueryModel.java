@@ -12,12 +12,12 @@ import java.util.Map;
 public class QueryModel {
     private Map<String, MovingItem> data = new HashMap<>();
 
-    void createItem(String id, int[] location, int numberOfMoves, int value) {
+    public void createItem(String id, int[] location, int numberOfMoves, int value) {
         MovingItem itemToAdd = new MovingItemImpl(id, location, numberOfMoves, value);
         data.put(itemToAdd.getName(), itemToAdd);
     }
 
-    void changeValue(String id, int value) {
+    public void changeValue(String id, int value) {
         MovingItemImpl oldItem = (MovingItemImpl) data.get(id);
         MovingItemImpl newItem = new MovingItemImpl(oldItem.getName(),
                 oldItem.getLocation(), oldItem.getNumberOfMoves(), value);
@@ -36,23 +36,23 @@ public class QueryModel {
         data.replace(id, newItem);
     }
 
-    void deleteItem(String id){
+    public void deleteItem(String id){
         data.remove(id);
     }
 
-    MovingItemDTO getItem(String id) {
+    public MovingItemDTO getItem(String id) {
         MovingItem item = data.get(id);
         return new MovingItemDTOImpl(item.getName(), item.getLocation(), item.getNumberOfMoves(), item.getValue());
     }
 
-    Enumeration<MovingItemDTO> getItemsAtPosition(int[] position) {
+    public Enumeration<MovingItemDTO> getItemsAtPosition(int[] position) {
         var items = data.values().stream().filter(item -> item.getLocation() == position)
                 .map(item -> (MovingItemDTO) new MovingItemDTOImpl(item.getName(), item.getLocation(), item.getNumberOfMoves(), item.getValue()))
                 .toList();
         return Collections.enumeration(items);
     }
 
-    Enumeration<MovingItemDTO> getMovingItems(){
+    public Enumeration<MovingItemDTO> getMovingItems(){
         var items = data.values().stream()
                 .map(item -> (MovingItemDTO) new MovingItemDTOImpl(item.getName(), item.getLocation(), item.getNumberOfMoves(), item.getValue()))
                 .toList();
