@@ -1,4 +1,4 @@
-package org.example.events;
+package org.example.command.events;
 
 public class CreateEvent extends Event {
     public String name;

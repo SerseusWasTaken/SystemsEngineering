@@ -1,12 +1,9 @@
-package org.example.events;
+package org.example.command.events;
 
-import org.example.api.EventStore;
+import org.example.command.api.EventStore;
 
-import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import static java.util.Optional.empty;
 
 public class EventStoreImpl implements EventStore {
 

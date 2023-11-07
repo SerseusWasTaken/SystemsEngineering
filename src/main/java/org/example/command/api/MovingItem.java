@@ -1,4 +1,4 @@
-package org.example.api;
+package org.example.command.api;
 
 public interface MovingItem {
     String getName();

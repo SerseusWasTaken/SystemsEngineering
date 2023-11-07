@@ -1,4 +1,4 @@
-package org.example.api;
+package org.example.query.api;
 
 public interface MovingItemDTO {
     String getName();

@@ -1,11 +1,11 @@
 package org.example.di;
 
-import org.example.CommandHandler;
-import org.example.EventHandler;
-import org.example.api.EventStore;
-import org.example.domain.DomainModel;
-import org.example.events.EventStoreImpl;
-import org.example.queries.QueryModel;
+import org.example.command.CommandHandler;
+import org.example.command.EventHandler;
+import org.example.command.api.EventStore;
+import org.example.query.domain.DomainModel;
+import org.example.command.events.EventStoreImpl;
+import org.example.query.QueryModel;
 
 public class SystemModule {
 

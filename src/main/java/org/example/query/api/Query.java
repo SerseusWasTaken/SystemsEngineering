@@ -1,4 +1,6 @@
-package org.example.api;
+package org.example.query.api;
+
+import org.example.query.api.MovingItemDTO;
 
 import java.util.Enumeration;
 

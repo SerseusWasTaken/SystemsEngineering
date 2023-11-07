@@ -1,4 +1,4 @@
-package org.example.events;
+package org.example.command.events;
 
 public class EventScope {
     private Class<? extends Event> eventType;

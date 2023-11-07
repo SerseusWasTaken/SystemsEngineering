@@ -1,8 +1,8 @@
-package org.example;
+package org.example.command;
 
-import org.example.api.EventStore;
-import org.example.events.*;
-import org.example.queries.QueryModel;
+import org.example.command.api.EventStore;
+import org.example.query.QueryModel;
+import org.example.command.events.*;
 
 //TODO: write implementation
 public class EventHandler {

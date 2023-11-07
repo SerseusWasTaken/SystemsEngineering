@@ -1,7 +1,7 @@
-package org.example;
+package org.example.command;
 
-import org.example.api.Commands;
-import org.example.domain.DomainModel;
+import org.example.command.api.Commands;
+import org.example.query.domain.DomainModel;
 
 public class CommandHandler implements Commands {
 

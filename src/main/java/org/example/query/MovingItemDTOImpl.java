@@ -1,15 +1,15 @@
-package org.example;
+package org.example.query;
 
-import org.example.api.MovingItem;
+import org.example.query.api.MovingItemDTO;
 
-public class MovingItemImpl implements MovingItem {
+public class MovingItemDTOImpl implements MovingItemDTO {
     String name;
     int[] location;
     int moves;
     int value;
 
 
-    public MovingItemImpl(String name, int[] location, int moves, int value) {
+    public MovingItemDTOImpl(String name, int[] location, int moves, int value) {
         this.name = name;
         this.location = location;
         this.moves = moves;

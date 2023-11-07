@@ -1,10 +1,10 @@
-package org.example.domain;
+package org.example.query.domain;
 
-import org.example.api.EventStore;
-import org.example.events.ChangeValueEvent;
-import org.example.events.CreateEvent;
-import org.example.events.DeleteEvent;
-import org.example.events.MoveEvent;
+import org.example.command.api.EventStore;
+import org.example.command.events.ChangeValueEvent;
+import org.example.command.events.CreateEvent;
+import org.example.command.events.DeleteEvent;
+import org.example.command.events.MoveEvent;
 
 import java.util.ArrayList;
 import java.util.List;

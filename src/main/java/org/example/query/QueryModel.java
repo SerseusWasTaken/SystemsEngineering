@@ -1,8 +1,8 @@
-package org.example.queries;
+package org.example.query;
 
-import org.example.MovingItemImpl;
-import org.example.api.MovingItem;
-import org.example.api.MovingItemDTO;
+import org.example.command.MovingItemImpl;
+import org.example.command.api.MovingItem;
+import org.example.query.api.MovingItemDTO;
 
 import java.util.Collections;
 import java.util.Enumeration;
