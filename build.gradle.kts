@@ -1,5 +1,6 @@
 plugins {
-    id("java")
+    kotlin("jvm") version "1.9.0"
+    application
 }
 
 group = "org.example"
@@ -10,10 +11,19 @@ repositories {
 }
 
 dependencies {
-    testImplementation(platform("org.junit:junit-bom:5.9.1"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    runtimeOnly("io.insert-koin:koin-core:3.5.0")
+
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {
     useJUnitPlatform()
+}
+
+kotlin {
+    jvmToolchain(8)
+}
+
+application {
+    mainClass.set("MainKt")
 }
