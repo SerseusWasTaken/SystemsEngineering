@@ -10,7 +10,7 @@ class EventHandlerImpl(
     private val queryDatabase: QueryDatabase
 ) : EventHandler {
     override fun fetchEvent() {
-
+        handleEvent(eventStore.pop())
     }
 
     override fun handleEvent(event: Event): Unit =

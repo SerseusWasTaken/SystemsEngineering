@@ -4,7 +4,6 @@ import command.api.Commands
 import command.api.DomainModel
 
 class CommandHandler(private val domainModel: DomainModel): Commands {
-    
 
     override fun createItem(id: String) {
         domainModel.createItem(id)
