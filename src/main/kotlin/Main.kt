@@ -1,10 +1,21 @@
 import di.SystemModule
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
-fun main(args: Array<String>) {
+fun main(args: Array<String>) = runBlocking{
     val commandHandler = SystemModule.handler
     val queryDatabase = SystemModule.queryDatabase
     val eventHandler = SystemModule.eventHandler
     val eventStore = SystemModule.eventStore
+
+    /*
+    GlobalScope.launch {
+        while (true) {
+            eventHandler.fetchEvent()
+        }
+    }
+     */
 
     commandHandler.createItem("Item1")
     eventHandler.handleEvent(eventStore.pop())

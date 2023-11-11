@@ -1,6 +1,8 @@
 package integration
 
 import integration.di.TestModule
+import io.kotest.matchers.shouldBe
+import io.mockk.every
 import org.junit.jupiter.api.Test
 import query.api.MovingItemDTO
 import query.impl.MovingItemDTOImpl
@@ -25,5 +27,16 @@ class IntegrationTest {
                 )
             )
         )
+    }
+
+    @Test
+    fun `MoveItem should move item correctly`() {
+        TestModule.handler.createItem("Item1", intArrayOf(1, 2, 3), 0)
+        TestModule.eventHandler.fetchEvent()
+        TestModule.handler.moveItem("Item1", intArrayOf(1, 2, 3))
+        TestModule.eventHandler.fetchEvent()
+
+        val newLocationOfItem = TestModule.queryModel.getMovingItems().nextElement().location
+        newLocationOfItem shouldBe intArrayOf(2, 4, 6)
     }
 }

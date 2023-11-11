@@ -9,7 +9,8 @@ import command.events.MoveEvent
 
 class DomainModelImpl(
     private val eventStore: EventStore,
-    private val data: MutableSet<String> = mutableSetOf()
+    //Visible for testing
+    val data: MutableSet<String> = mutableSetOf()
 ) : DomainModel {
 
     private fun executeWhenIdIsNotInUse(id: String, block: () -> Unit) =

@@ -11,11 +11,15 @@ repositories {
 }
 
 dependencies {
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.7.3")
+
     runtimeOnly("io.insert-koin:koin-core:3.5.0")
 
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("io.mockk:mockk-agent:1.13.8")
+    testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
 }
 
 tasks.test {
