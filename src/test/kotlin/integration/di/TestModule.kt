@@ -1,6 +1,6 @@
 package integration.di
 
-import command.CommandHandler
+import command.impl.CommandHandler
 import command.api.DomainModel
 import command.api.EventStore
 import command.impl.DomainModelImpl
@@ -18,7 +18,7 @@ object TestModule {
 
     val eventStore: EventStore = spyk(EventStoreImpl(LinkedBlockingDeque()))
 
-    val queryDatabase: QueryDatabase = spyk(QueryDatabaseImpl(mutableMapOf()))
+    val queryDatabase: QueryDatabaseImpl = spyk(QueryDatabaseImpl(mutableMapOf()))
 
     val queryModel: QueryModel = spyk(QueryModelImpl(queryDatabase))
 

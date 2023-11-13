@@ -4,7 +4,7 @@ import query.api.MovingItemDTO
 import query.api.QueryDatabase
 import query.utils.addValues
 
-class QueryDatabaseImpl(private val data: MutableMap<String, MovingItemDTO>): QueryDatabase {
+class QueryDatabaseImpl(val data: MutableMap<String, MovingItemDTO>): QueryDatabase {
 
     override fun changeValue(id: String, value: Int) {
         val oldItem = data[id]

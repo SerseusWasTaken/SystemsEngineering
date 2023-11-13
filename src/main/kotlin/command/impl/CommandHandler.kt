@@ -1,4 +1,4 @@
-package command
+package command.impl
 
 import command.api.Commands
 import command.api.DomainModel
