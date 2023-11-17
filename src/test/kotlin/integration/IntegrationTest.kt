@@ -15,6 +15,8 @@ class IntegrationTest {
     @AfterEach
     fun teardown() {
         TestModule.queryDatabase.data.clear()
+        TestModule.eventStore.queue.clear()
+        TestModule.eventStore.allEvents.clear()
     }
 
     @Test
@@ -25,10 +27,21 @@ class IntegrationTest {
     }
 
     @Test
-    fun `MoveItem should move item correctly`() {
+    fun `CreateItem should create item correctly when it collides with existing item`() {
         TestModule.handler.createItem("Item1", intArrayOf(1, 2, 3), 0)
         TestModule.eventHandler.fetchEvent()
-        TestModule.handler.moveItem("Item1", intArrayOf(1, 2, 3))
+        TestModule.handler.createItem("Item2", intArrayOf(1, 2, 3), 0)
+        TestModule.eventHandler.fetchEvent()
+
+        val items = TestModule.queryModel.getMovingItems().toList()
+        items.size shouldBe 1
+    }
+
+    @Test
+    fun `MoveItem should move item correctly`() {
+        TestModule.handler.createItem("Item3", intArrayOf(1, 2, 3), 0)
+        TestModule.eventHandler.fetchEvent()
+        TestModule.handler.moveItem("Item3", intArrayOf(1, 2, 3))
         TestModule.eventHandler.fetchEvent()
 
         val newLocationOfItem = TestModule.queryModel.getMovingItems().nextElement().location
@@ -50,14 +63,14 @@ class IntegrationTest {
 
     @Test
     fun `DeleteItem should delete Item from QueryDatabse`() {
-        TestModule.handler.createItem("Item1", intArrayOf(1, 2, 3), 0)
+        TestModule.handler.createItem("Item7", intArrayOf(1, 2, 3), 0)
         TestModule.eventHandler.fetchEvent()
         TestModule.queryModel.getMovingItems().toList().size shouldBe 1
 
-        TestModule.handler.deleteItem("Item1")
+        TestModule.handler.deleteItem("Item7")
         TestModule.eventHandler.fetchEvent()
 
-        verify { TestModule.queryDatabase.deleteItem("Item1") }
+        verify { TestModule.queryDatabase.deleteItem("Item7") }
         TestModule.queryModel.getMovingItems() shouldBe enumerationOf()
     }
 

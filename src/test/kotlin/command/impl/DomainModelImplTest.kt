@@ -14,11 +14,10 @@ import org.junit.jupiter.api.Test
 class DomainModelImplTest {
 
     val mockEventStore = mockk<EventStoreImpl>(relaxed = true)
-    val store: MutableSet<String> = mockk<MutableSet<String>>(relaxed = true)
     lateinit var cut: DomainModelImpl
     @BeforeEach
     fun setUp() {
-        cut = DomainModelImpl(mockEventStore, store)
+        cut = DomainModelImpl(mockEventStore)
     }
 
     @AfterEach
@@ -28,7 +27,7 @@ class DomainModelImplTest {
 
     @Test
     fun `createItem should fail if id is already in use`() {
-        every { store.contains(any()) } returns true
+        every { cut.givenItemExistsCurrently(any()) } returns true
         assertThrows(IllegalArgumentException::class.java) {
             cut.createItem("")
         }
@@ -36,7 +35,7 @@ class DomainModelImplTest {
 
     @Test
     fun `createItem should create an event`() {
-        every { store.contains(any()) } returns false
+        every { cut.givenItemExistsCurrently(any()) } returns false
         cut.createItem("ItemTest")
         verify {
             mockEventStore.storeEvent(any())
