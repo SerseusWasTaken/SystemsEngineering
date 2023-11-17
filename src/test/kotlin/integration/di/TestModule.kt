@@ -16,7 +16,7 @@ import java.util.concurrent.LinkedBlockingDeque
 
 object TestModule {
 
-    val eventStore: EventStore = spyk(EventStoreImpl(LinkedBlockingDeque()))
+    val eventStore: EventStoreImpl = spyk(EventStoreImpl(LinkedBlockingDeque(), mutableListOf()))
 
     val queryDatabase: QueryDatabaseImpl = spyk(QueryDatabaseImpl(mutableMapOf()))
 
@@ -24,7 +24,7 @@ object TestModule {
 
     val eventHandler: EventHandler = spyk(EventHandlerImpl(eventStore, queryDatabase))
 
-    val domainModel: DomainModel = spyk(DomainModelImpl(eventStore))
+    val domainModel: DomainModelImpl = spyk(DomainModelImpl(eventStore))
 
     val handler: CommandHandler = spyk(CommandHandler(domainModel))
 }

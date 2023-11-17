@@ -17,8 +17,9 @@ class EventHandlerImpl(
         when(event) {
             is CreateEvent -> queryDatabase.createItem(MovingItemDTOImpl.fromMovingItem(event.item))
             is ChangeValueEvent -> queryDatabase.changeValue(event.id, event.newValue)
-            is DeleteEvent -> queryDatabase.deleteItem(event.id)
             is MoveEvent -> queryDatabase.moveLocation(event.id, event.vector)
+            is DeleteEvent -> queryDatabase.deleteItem(event.id)
+            is ReplaceEvent -> queryDatabase.replaceItem(event.id, event.itemToMove, event.vector, event.value)
         }
 
 }

@@ -15,7 +15,7 @@ import java.util.concurrent.LinkedBlockingDeque
 
 object SystemModule {
 
-    val eventStore: EventStore = EventStoreImpl(LinkedBlockingDeque())
+    val eventStore: EventStore = EventStoreImpl(LinkedBlockingDeque(), mutableListOf())
 
     val queryDatabase: QueryDatabase = QueryDatabaseImpl(mutableMapOf())
 

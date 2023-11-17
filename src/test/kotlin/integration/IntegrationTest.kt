@@ -36,6 +36,19 @@ class IntegrationTest {
     }
 
     @Test
+    fun `MoveItem should move item correctly when it collides moves`() {
+        TestModule.handler.createItem("Item5", intArrayOf(1, 2, 3), 0)
+        TestModule.eventHandler.fetchEvent()
+        TestModule.handler.createItem("Item6", intArrayOf(0, 0, 0), 0)
+        TestModule.eventHandler.fetchEvent()
+
+        TestModule.handler.moveItem("Item6", intArrayOf(1, 2, 3))
+        TestModule.eventHandler.fetchEvent()
+        val items = TestModule.queryModel.getMovingItems().toList()
+        items.size shouldBe 1
+    }
+
+    @Test
     fun `DeleteItem should delete Item from QueryDatabse`() {
         TestModule.handler.createItem("Item1", intArrayOf(1, 2, 3), 0)
         TestModule.eventHandler.fetchEvent()
