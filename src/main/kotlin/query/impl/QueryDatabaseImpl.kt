@@ -36,18 +36,4 @@ class QueryDatabaseImpl(val data: MutableMap<String, MovingItemDTO>): QueryDatab
     override fun getItems(): Map<String, MovingItemDTO> {
         return data
     }
-
-    override fun replaceItem(id: String, itemToMove: String, vector: IntArray, value: Int) {
-        data.remove(id)
-        val oldItem = data[itemToMove]
-        if (oldItem != null) {
-            oldItem?.apply {
-                val newLocation = vector.addValues(location)
-                data.replace(itemToMove, MovingItemDTOImpl(name, newLocation, moves + 1, this.value))
-            }
-        }
-        else {
-            data.putIfAbsent(id, MovingItemDTOImpl(id, vector, 0, value))
-        }
-    }
 }

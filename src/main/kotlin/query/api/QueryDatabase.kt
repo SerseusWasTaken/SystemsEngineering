@@ -7,5 +7,4 @@ interface QueryDatabase {
     fun deleteItem(id: String)
     fun getItem(id: String): MovingItemDTO?
     fun getItems(): Map<String, MovingItemDTO>
-    fun replaceItem(id: String, itemToMove: String, vector: IntArray, value: Int = 0)
 }

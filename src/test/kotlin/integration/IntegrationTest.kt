@@ -15,8 +15,7 @@ class IntegrationTest {
     @AfterEach
     fun teardown() {
         TestModule.queryDatabase.data.clear()
-        TestModule.eventStore.queue.clear()
-        TestModule.eventStore.allEvents.clear()
+        TestModule.eventStore.clear()
     }
 
     @Test
@@ -62,7 +61,7 @@ class IntegrationTest {
     }
 
     @Test
-    fun `DeleteItem should delete Item from QueryDatabse`() {
+    fun `DeleteItem should delete Item from QueryDatabase`() {
         TestModule.handler.createItem("Item7", intArrayOf(1, 2, 3), 0)
         TestModule.eventHandler.fetchEvent()
         TestModule.queryModel.getMovingItems().toList().size shouldBe 1

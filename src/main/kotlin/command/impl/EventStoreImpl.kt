@@ -5,6 +5,11 @@ import command.events.Event
 import java.util.concurrent.BlockingQueue
 
 class EventStoreImpl(val queue: BlockingQueue<Event>, val allEvents: MutableCollection<Event>): EventStore {
+
+    fun clear() {
+        queue.clear()
+        allEvents.clear()
+    }
     override fun storeEvent(event: Event) {
         queue.add(event)
         allEvents.add(event)

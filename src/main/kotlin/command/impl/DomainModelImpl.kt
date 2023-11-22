@@ -25,13 +25,13 @@ class DomainModelImpl(
     override fun createItem(id: String) =
         executeWhenIdIsNotInUse(id) {
             val collidingItem = findCollidingItem(id, intArrayOf(0, 0, 0))
-            collidingItem?.apply { eventStore.storeEvent(ReplaceEvent(this, id, intArrayOf(0, 0, 0))) } ?: eventStore.storeEvent(CreateEvent(MovingItemImpl(id, intArrayOf(0, 0, 0), 0, 0)))
+            collidingItem?.apply { eventStore.storeEvent(ReplaceEvent(this, id, intArrayOf(0, 0, 0), doCreateItem = true)) } ?: eventStore.storeEvent(CreateEvent(MovingItemImpl(id, intArrayOf(0, 0, 0), 0, 0)))
         }
 
     override fun createItem(id: String, position: IntArray, value: Int) =
         executeWhenIdIsNotInUse(id) {
             val collidingItem = findCollidingItem(id, position)
-            collidingItem?.apply { eventStore.storeEvent(ReplaceEvent(this, id, position)) } ?: eventStore.storeEvent(CreateEvent(MovingItemImpl(id, position, 0, value)))
+            collidingItem?.apply { eventStore.storeEvent(ReplaceEvent(this, id, position, value, doCreateItem = true)) } ?: eventStore.storeEvent(CreateEvent(MovingItemImpl(id, position, 0, value)))
         }
 
     override fun deleteItem(id: String) =
@@ -50,7 +50,7 @@ class DomainModelImpl(
 
             if (countOfMoves < 20) {
                 val collidingItem = findCollidingItem(id, vector)
-                collidingItem?.apply { eventStore.storeEvent(ReplaceEvent(this, id, vector)) } ?: eventStore.storeEvent(MoveEvent(id, vector))
+                collidingItem?.apply { eventStore.storeEvent(ReplaceEvent(this, id, vector, doCreateItem = false)) } ?: eventStore.storeEvent(MoveEvent(id, vector))
             }
             else deleteItem(id)
         }
