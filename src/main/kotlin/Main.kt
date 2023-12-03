@@ -24,7 +24,7 @@ fun main(args: Array<String>) = runBlocking {
     commandHandler.createItem("Item1")
     eventHandler.fetchEvent()
 
-    commandHandler.createItem("Item2")
+    commandHandler.createItem("Item2", intArrayOf(1,1,1), 0)
     eventHandler.fetchEvent()
 
     commandHandler.moveItem("Item1", intArrayOf(1, 3, 0))

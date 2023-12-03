@@ -15,6 +15,7 @@ import java.util.Collections
 import java.util.Enumeration
 
 class IntegrationTest {
+    // Tests are broken right now when run sequentially but work just fine if run on their own
 
     @AfterEach
     fun teardown() {
@@ -59,7 +60,7 @@ class IntegrationTest {
     }
 
     @Test
-    fun `MoveItem should move item correctly when it collides moves`() {
+    fun `MoveItem should move item correctly when it collides`() {
         TestModule.handler.createItem("Item5", intArrayOf(1, 2, 3), 0)
         TestModule.eventHandler.fetchEvent()
         TestModule.handler.createItem("Item6", intArrayOf(0, 0, 0), 0)
@@ -69,6 +70,7 @@ class IntegrationTest {
         TestModule.eventHandler.fetchEvent()
         val items = TestModule.queryModel.getMovingItems().toList()
         items.size shouldBe 1
+        items[0].name shouldBe "Item6"
     }
 
     @Test

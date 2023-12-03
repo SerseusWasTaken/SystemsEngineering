@@ -22,7 +22,7 @@ object TestModule {
 
     val queryModel: QueryModel = spyk(QueryModelImpl(queryDatabase))
 
-    val eventHandler: EventHandler = spyk(EventHandlerImpl(eventStore, queryDatabase))
+    val eventHandler: EventHandlerImpl = spyk(EventHandlerImpl(eventStore, queryDatabase))
 
     val domainModel: DomainModelImpl = spyk(DomainModelImpl(eventStore))
 

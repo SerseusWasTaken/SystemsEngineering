@@ -2,6 +2,7 @@ package command.impl
 
 import command.api.DomainModel
 import command.api.EventStore
+import command.api.MovingItem
 import command.api.MovingItemImpl
 import command.events.*
 import jakarta.jms.MessageProducer
@@ -12,8 +13,9 @@ import query.utils.addValues
 
 class DomainModelImpl(
     val eventStore: EventStore,
+    private val itemStore: MutableMap<String, MovingItem> = mutableMapOf()
 ) : DomainModel {
-    // This stuff probably has to get moved to the command handler
+    // This stuff probably has to get moved to the command handler and is tightly coupled here
     val connectionFactory = ActiveMQConnectionFactory("tcp://localhost:61616")
     val connection = connectionFactory.createConnection("command", "command")
     val session: Session
@@ -42,39 +44,49 @@ class DomainModelImpl(
 
     override fun createItem(id: String) =
         executeWhenIdIsNotInUse(id) {
-            val collidingItem = findCollidingItem(id, intArrayOf(0, 0, 0))
+            val collidingItem = findCollidingItem(intArrayOf(0, 0, 0))
             collidingItem?.apply { producer.send(session.createTextMessage(ReplaceEvent(this, id, intArrayOf(0, 0, 0), doCreateItem = true).serialize())) } ?: producer.send(session.createTextMessage(CreateEvent(
                 MovingItemImpl(id, intArrayOf(0, 0, 0), 0, 0)
             ).serialize()))
+            itemStore[id] = MovingItemImpl(id, intArrayOf(0,0,0), 0, 0)
         }
 
     override fun createItem(id: String, position: IntArray, value: Int) =
         executeWhenIdIsNotInUse(id) {
-            val collidingItem = findCollidingItem(id, position)
+            val collidingItem = findCollidingItem(position)
             collidingItem?.apply { producer.send(session.createTextMessage(ReplaceEvent(this, id, position, value, doCreateItem = true).serialize())) } ?: producer.send(session.createTextMessage(CreateEvent(
                 MovingItemImpl(id, position, 0, value)
             ).serialize()))
+            itemStore[id] = MovingItemImpl(id, position, 0, value)
         }
 
     override fun deleteItem(id: String) =
         executeWhenIdIsInUse(id) {
             producer.send(session.createTextMessage(DeleteEvent(id).serialize()))
+            itemStore.remove(id)
         }
 
     override fun moveItem(id: String, vector: IntArray) =
         executeWhenIdIsInUse(id) {
-            val lastDeleteEvent = eventStore.getAllEvents().indexOfLast { event -> event is RemoveEvent && event.id == id}
-            val countOfMoves =
-                if (lastDeleteEvent == -1)
-                    eventStore.getAllEvents().filterIsInstance<MoveEvent>().count { moveEvent -> moveEvent.id == id }
-                else
-                    eventStore.getAllEvents().slice(0..lastDeleteEvent).filterIsInstance<MoveEvent>().count { moveEvent -> moveEvent.id == id }
 
-            if (countOfMoves < 20) {
-                val collidingItem = findCollidingItem(id, vector)
-                collidingItem?.apply { producer.send(session.createTextMessage(ReplaceEvent(this, id, vector, doCreateItem = false).serialize())) } ?: producer.send(session.createTextMessage(MoveEvent(id, vector).serialize()))
-            }
-            else deleteItem(id)
+            if (itemStore[id]!!.moves < 20) {
+                val newPosition = itemStore[id]!!.location.addValues(vector)
+                val collidingItem = findCollidingItem(newPosition)
+                collidingItem?.apply {
+                    producer.send(
+                        session.createTextMessage(
+                            ReplaceEvent(
+                                this,
+                                id,
+                                newPosition,
+                                doCreateItem = false
+                            ).serialize()
+                        )
+                    )
+                } ?: producer.send(session.createTextMessage(MoveEvent(id, newPosition).serialize()))
+                val oldItem = itemStore[id]!!
+                itemStore.replace(id, MovingItemImpl(id, newPosition, oldItem.moves + 1, oldItem.value))
+            } else deleteItem(id)
         }
 
     override fun changeValue(id: String, newValue: Int) =
@@ -83,72 +95,11 @@ class DomainModelImpl(
         }
 
     fun givenItemExistsCurrently(id: String): Boolean {
-        val lastCreateEvent = eventStore.getAllEvents().indexOfLast { event -> event is CreateEvent && event.id == id}
-        val lastDeleteEvent = eventStore.getAllEvents().indexOfLast { event -> event is RemoveEvent && event.id == id}
-        return lastDeleteEvent < lastCreateEvent
+        return itemStore.containsKey(id)
     }
 
-    private fun findItemPosition (id: String, existingItemEvents: List<Event>): Pair<String, IntArray> {
-        val givenItemEvents = existingItemEvents.filter { it.id == id }
-        val givenItemPositionDimension = (givenItemEvents.find { it is CreateEvent } as CreateEvent).item.location.size
-        val givenItemPosition = givenItemEvents.fold(IntArray(givenItemPositionDimension)) { sum, element ->
-            when (element) {
-                is CreateEvent -> {
-                    sum.addValues(element.item.location)
-                }
-
-                is MoveEvent -> {
-                    sum.addValues(element.vector)
-                }
-                else -> {
-                    sum
-                }
-            }
-        }
-        return Pair(id, givenItemPosition)
-    }
-
-    private fun findNewItemPosition (id: String, existingItemEvents: List<Event>, vector: IntArray): Pair<String, IntArray> {
-        val givenItemEvents = existingItemEvents.filter { it.id == id }
-        if (givenItemEvents.isNotEmpty()){
-            val givenItemPositionDimension = (givenItemEvents.find { it is CreateEvent } as CreateEvent).item.location.size
-            val givenItemPosition = givenItemEvents.fold(IntArray(givenItemPositionDimension)) { sum, element ->
-                when (element) {
-                    is CreateEvent -> {
-                        sum.addValues(element.item.location)
-                    }
-
-                    is MoveEvent -> {
-                        sum.addValues(element.vector)
-                    }
-
-                    else -> {
-                        sum
-                    }
-                }.addValues(vector)
-            }
-            return Pair(id, givenItemPosition)
-        }
-        else {
-            return Pair(id, vector)
-        }
-    }
-
-    private fun findCollidingItem(id: String, vector: IntArray): String? {
-        val currentItemsEvents =
-            eventStore.getAllEvents()
-                .groupBy { it.id }
-                .filter { givenItemExistsCurrently(it.key) }
-                .map { it.key to if (it.value.indexOfLast { event -> event is RemoveEvent } != -1) it.value.slice(0..it.value.indexOfLast { event -> event is RemoveEvent }) else it.value }
-                .flatMap { it.second }
-
-        val givenItemPosition = findNewItemPosition(id, currentItemsEvents, vector).second
-
-        val otherPositions = currentItemsEvents.groupBy { it.id }
-            .filter { it.key != id }
-            .map { findItemPosition(it.key, it.value) }
-
-        return otherPositions.find { it.second.contentEquals(givenItemPosition) }?.first
+    private fun findCollidingItem(vector: IntArray): String? {
+        return itemStore.values.find { it.location.contentEquals(vector) }?.name
     }
 
 }

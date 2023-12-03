@@ -29,6 +29,7 @@ class EventHandlerImpl(
     override fun fetchEvent() {
         val msg = consumer.receive()
         if (msg is TextMessage) {
+            println("Recieved msg: ${msg.text.deserializeToEvent()}")
             handleEvent(msg.text.deserializeToEvent())
         }
     }
