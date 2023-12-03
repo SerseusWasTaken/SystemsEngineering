@@ -2,12 +2,30 @@ package command.impl
 
 import command.api.DomainModel
 import command.api.EventStore
+import command.api.MovingItemImpl
 import command.events.*
+import jakarta.jms.MessageProducer
+import jakarta.jms.Queue
+import jakarta.jms.Session
+import org.apache.activemq.ActiveMQConnectionFactory
 import query.utils.addValues
 
 class DomainModelImpl(
     val eventStore: EventStore,
 ) : DomainModel {
+    // This stuff probably has to get moved to the command handler
+    val connectionFactory = ActiveMQConnectionFactory("tcp://localhost:61616")
+    val connection = connectionFactory.createConnection("command", "command")
+    val session: Session
+    val destination: Queue
+    val producer: MessageProducer
+    init {
+        connection.start()
+        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
+        destination = session.createQueue("MovingItems.Events")
+        producer = session.createProducer(destination)
+        producer.timeToLive = 2000
+    }
 
     private fun executeWhenIdIsNotInUse(id: String, block: () -> Unit) =
         if (!givenItemExistsCurrently(id))
@@ -25,18 +43,22 @@ class DomainModelImpl(
     override fun createItem(id: String) =
         executeWhenIdIsNotInUse(id) {
             val collidingItem = findCollidingItem(id, intArrayOf(0, 0, 0))
-            collidingItem?.apply { eventStore.storeEvent(ReplaceEvent(this, id, intArrayOf(0, 0, 0), doCreateItem = true)) } ?: eventStore.storeEvent(CreateEvent(MovingItemImpl(id, intArrayOf(0, 0, 0), 0, 0)))
+            collidingItem?.apply { producer.send(session.createTextMessage(ReplaceEvent(this, id, intArrayOf(0, 0, 0), doCreateItem = true).serialize())) } ?: producer.send(session.createTextMessage(CreateEvent(
+                MovingItemImpl(id, intArrayOf(0, 0, 0), 0, 0)
+            ).serialize()))
         }
 
     override fun createItem(id: String, position: IntArray, value: Int) =
         executeWhenIdIsNotInUse(id) {
             val collidingItem = findCollidingItem(id, position)
-            collidingItem?.apply { eventStore.storeEvent(ReplaceEvent(this, id, position, value, doCreateItem = true)) } ?: eventStore.storeEvent(CreateEvent(MovingItemImpl(id, position, 0, value)))
+            collidingItem?.apply { producer.send(session.createTextMessage(ReplaceEvent(this, id, position, value, doCreateItem = true).serialize())) } ?: producer.send(session.createTextMessage(CreateEvent(
+                MovingItemImpl(id, position, 0, value)
+            ).serialize()))
         }
 
     override fun deleteItem(id: String) =
         executeWhenIdIsInUse(id) {
-            eventStore.storeEvent(DeleteEvent(id))
+            producer.send(session.createTextMessage(DeleteEvent(id).serialize()))
         }
 
     override fun moveItem(id: String, vector: IntArray) =
@@ -50,14 +72,14 @@ class DomainModelImpl(
 
             if (countOfMoves < 20) {
                 val collidingItem = findCollidingItem(id, vector)
-                collidingItem?.apply { eventStore.storeEvent(ReplaceEvent(this, id, vector, doCreateItem = false)) } ?: eventStore.storeEvent(MoveEvent(id, vector))
+                collidingItem?.apply { producer.send(session.createTextMessage(ReplaceEvent(this, id, vector, doCreateItem = false).serialize())) } ?: producer.send(session.createTextMessage(MoveEvent(id, vector).serialize()))
             }
             else deleteItem(id)
         }
 
     override fun changeValue(id: String, newValue: Int) =
         executeWhenIdIsInUse(id) {
-            eventStore.storeEvent(ChangeValueEvent(id, newValue))
+            producer.send(session.createTextMessage(ChangeValueEvent(id, newValue).serialize()))
         }
 
     fun givenItemExistsCurrently(id: String): Boolean {

@@ -3,7 +3,11 @@ package integration
 import integration.di.TestModule
 import io.kotest.matchers.shouldBe
 import io.mockk.verify
+import org.apache.activemq.broker.BrokerService
+import org.apache.activemq.security.AuthenticationUser
+import org.apache.activemq.security.SimpleAuthenticationPlugin
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import query.api.MovingItemDTO
 import query.impl.MovingItemDTOImpl
@@ -22,7 +26,14 @@ class IntegrationTest {
     fun `createItem should result in query to return that item`() {
         TestModule.handler.createItem("TestItem")
         TestModule.eventHandler.fetchEvent()
-        TestModule.queryModel.getMovingItems() shouldBe enumerationOf(MovingItemDTOImpl("TestItem", intArrayOf(0, 0, 0), 0, 0))
+        TestModule.queryModel.getMovingItems() shouldBe enumerationOf(
+            MovingItemDTOImpl(
+                "TestItem",
+                intArrayOf(0, 0, 0),
+                0,
+                0
+            )
+        )
     }
 
     @Test
@@ -74,6 +85,25 @@ class IntegrationTest {
     }
 
     companion object {
+        lateinit var broker: BrokerService
+        @BeforeAll
+        @JvmStatic
+        fun setup() {
+            broker = BrokerService()
+            broker.brokerName = "MovingItemBroker"
+            broker.setDataDirectory("brokerData/")
+            val auth = SimpleAuthenticationPlugin()
+            auth.setUsers(
+                listOf(
+                    AuthenticationUser("query", "query", "consumers"),
+                    AuthenticationUser("command", "command", "publishers")
+                )
+            )
+            broker.plugins = arrayOf(auth)
+            broker.addConnector("tcp://localhost:61616")
+            broker.addConnector("tcp://localhost:1883")
+            broker.start()
+        }
         private fun Enumeration<MovingItemDTO>.equalsEnum(param: Enumeration<MovingItemDTO>): Boolean {
             if (this.toList().size != param.toList().size)
                 return false
@@ -85,6 +115,7 @@ class IntegrationTest {
         private infix fun <T : Enumeration<MovingItemDTO>, U : T> T.shouldBe(expected: U): Unit =
             assert(this.equalsEnum(expected))
 
-        private fun enumerationOf(vararg param: MovingItemDTO): Enumeration<MovingItemDTO> = Collections.enumeration<MovingItemDTO>(param.asList())
+        private fun enumerationOf(vararg param: MovingItemDTO): Enumeration<MovingItemDTO> =
+            Collections.enumeration<MovingItemDTO>(param.asList())
     }
 }

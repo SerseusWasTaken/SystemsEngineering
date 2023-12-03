@@ -5,7 +5,7 @@ import command.events.CreateEvent
 import command.events.DeleteEvent
 import command.events.MoveEvent
 import command.impl.EventStoreImpl
-import command.impl.MovingItemImpl
+import command.api.MovingItemImpl
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import io.mockk.verify

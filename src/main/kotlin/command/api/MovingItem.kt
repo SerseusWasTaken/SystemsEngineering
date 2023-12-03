@@ -1,6 +1,9 @@
 package command.api
 
-interface MovingItem {
+import kotlinx.serialization.Serializable
+
+@Serializable
+sealed interface MovingItem {
     val name: String
     val location: IntArray
     val moves: Int
