@@ -14,19 +14,18 @@ class EventHandlerImpl(
         private val eventStore: EventStore,
         private val queryDatabase: QueryDatabase
 ) : EventHandler {
-    val connectionFactory = ActiveMQConnectionFactory("tcp://localhost:61616")
-    val connection = connectionFactory.createConnection("query", "query")
-    val session: Session
-    val destination: Queue
-    val consumer: MessageConsumer
-
     private val timestampList = mutableListOf<Long>()
+
+    val props = Properties()
+    val consumer = Consumer(props, listOf("allEvents"))
+
     init {
         connection.start()
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
         destination = session.createQueue("MovingItems.Events")
         consumer = session.createConsumer(destination)
     }
+
 
     override fun fetchEvent() {
         val msg = consumer.receive()
