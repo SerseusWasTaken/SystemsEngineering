@@ -8,6 +8,7 @@ import command.events.*
 import jakarta.jms.MessageProducer
 import jakarta.jms.Queue
 import jakarta.jms.Session
+import jakarta.jms.TextMessage
 import org.apache.activemq.ActiveMQConnectionFactory
 import query.utils.addValues
 
@@ -41,11 +42,16 @@ class DomainModelImpl(
         else
             throw IllegalArgumentException("No item with given id found")
 
+    private fun sendMessage(msg: TextMessage) {
+        msg.setLongProperty("timestamp", System.currentTimeMillis())
+        producer.send(msg)
+    }
+
 
     override fun createItem(id: String) =
         executeWhenIdIsNotInUse(id) {
             val collidingItem = findCollidingItem(intArrayOf(0, 0, 0))
-            collidingItem?.apply { producer.send(session.createTextMessage(ReplaceEvent(this, id, intArrayOf(0, 0, 0), doCreateItem = true).serialize())) } ?: producer.send(session.createTextMessage(CreateEvent(
+            collidingItem?.apply { sendMessage(session.createTextMessage(ReplaceEvent(this, id, intArrayOf(0, 0, 0), doCreateItem = true).serialize())) } ?: sendMessage(session.createTextMessage(CreateEvent(
                 MovingItemImpl(id, intArrayOf(0, 0, 0), 0, 0)
             ).serialize()))
             itemStore[id] = MovingItemImpl(id, intArrayOf(0,0,0), 0, 0)
@@ -54,7 +60,7 @@ class DomainModelImpl(
     override fun createItem(id: String, position: IntArray, value: Int) =
         executeWhenIdIsNotInUse(id) {
             val collidingItem = findCollidingItem(position)
-            collidingItem?.apply { producer.send(session.createTextMessage(ReplaceEvent(this, id, position, value, doCreateItem = true).serialize())) } ?: producer.send(session.createTextMessage(CreateEvent(
+            collidingItem?.apply { sendMessage(session.createTextMessage(ReplaceEvent(this, id, position, value, doCreateItem = true).serialize())) } ?: sendMessage(session.createTextMessage(CreateEvent(
                 MovingItemImpl(id, position, 0, value)
             ).serialize()))
             itemStore[id] = MovingItemImpl(id, position, 0, value)
@@ -62,7 +68,7 @@ class DomainModelImpl(
 
     override fun deleteItem(id: String) =
         executeWhenIdIsInUse(id) {
-            producer.send(session.createTextMessage(DeleteEvent(id).serialize()))
+            sendMessage(session.createTextMessage(DeleteEvent(id).serialize()))
             itemStore.remove(id)
         }
 
@@ -73,7 +79,7 @@ class DomainModelImpl(
                 val newPosition = itemStore[id]!!.location.addValues(vector)
                 val collidingItem = findCollidingItem(newPosition)
                 collidingItem?.apply {
-                    producer.send(
+                    sendMessage(
                         session.createTextMessage(
                             ReplaceEvent(
                                 this,
@@ -83,7 +89,7 @@ class DomainModelImpl(
                             ).serialize()
                         )
                     )
-                } ?: producer.send(session.createTextMessage(MoveEvent(id, newPosition).serialize()))
+                } ?: sendMessage(session.createTextMessage(MoveEvent(id, newPosition).serialize()))
                 val oldItem = itemStore[id]!!
                 itemStore.replace(id, MovingItemImpl(id, newPosition, oldItem.moves + 1, oldItem.value))
             } else deleteItem(id)
@@ -91,7 +97,7 @@ class DomainModelImpl(
 
     override fun changeValue(id: String, newValue: Int) =
         executeWhenIdIsInUse(id) {
-            producer.send(session.createTextMessage(ChangeValueEvent(id, newValue).serialize()))
+            sendMessage(session.createTextMessage(ChangeValueEvent(id, newValue).serialize()))
         }
 
     fun givenItemExistsCurrently(id: String): Boolean {

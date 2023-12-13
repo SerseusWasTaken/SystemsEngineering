@@ -13,48 +13,50 @@ fun main(args: Array<String>) = runBlocking {
     val eventHandler = SystemModule.eventHandler
     val eventStore = SystemModule.eventStore
 
-    /*
+
     GlobalScope.launch {
         while (true) {
             eventHandler.fetchEvent()
         }
     }
-     */
+
 
     commandHandler.createItem("Item1")
-    eventHandler.fetchEvent()
+    //eventHandler.fetchEvent()
 
     commandHandler.createItem("Item2", intArrayOf(1,1,1), 0)
-    eventHandler.fetchEvent()
+    //eventHandler.fetchEvent()
 
     commandHandler.moveItem("Item1", intArrayOf(1, 3, 0))
     println(queryDatabase.getItem("Item1")?.location?.get(1))
     println(queryDatabase.getItem("Item2")?.location?.get(1))
-    eventHandler.fetchEvent()
+    //eventHandler.fetchEvent()
 
 
     commandHandler.moveItem("Item2", intArrayOf(1, 1, 0))
     println(queryDatabase.getItem("Item1")?.location?.get(1))
     commandHandler.moveItem("Item2", intArrayOf(1, 2, 0))
-    eventHandler.fetchEvent()
+    // eventHandler.fetchEvent()
 
 
     println(queryDatabase.getItem("Item1")?.location?.get(1))
     println(queryDatabase.getItem("Item2")?.location?.get(1))
     commandHandler.moveItem("Item1", intArrayOf(1, 2, 0))
-    eventHandler.fetchEvent()
-    eventHandler.fetchEvent()
+    //eventHandler.fetchEvent()
+    //eventHandler.fetchEvent()
     println(queryDatabase.getItem("Item1")?.location?.get(1))
     println(queryDatabase.getItem("Item2")?.location?.get(1))
 
     commandHandler.changeValue("Item1", 5)
-    eventHandler.fetchEvent()
+    //eventHandler.fetchEvent()
     println(queryDatabase.getItem("Item1")?.value)
     println(queryDatabase.getItem("Item2")?.moves)
 
     commandHandler.deleteItem("Item1")
-    eventHandler.fetchEvent()
+    //eventHandler.fetchEvent()
     println(queryDatabase.getItem("Item1")?.location?.get(1))
+
+    println("Average receive time: ${eventHandler.getAverageRecieveTime()}")
 
     broker.stop()
 }

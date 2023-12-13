@@ -19,6 +19,8 @@ class EventHandlerImpl(
     val session: Session
     val destination: Queue
     val consumer: MessageConsumer
+
+    private val timestampList = mutableListOf<Long>()
     init {
         connection.start()
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
@@ -29,7 +31,9 @@ class EventHandlerImpl(
     override fun fetchEvent() {
         val msg = consumer.receive()
         if (msg is TextMessage) {
-            println("Recieved msg: ${msg.text.deserializeToEvent()}")
+            val timeToRecieve = System.currentTimeMillis() - msg.getLongProperty("timestamp")
+            println("Recieved msg: ${msg.text.deserializeToEvent()} and timestamp: $timeToRecieve")
+            timestampList.add(timeToRecieve)
             handleEvent(msg.text.deserializeToEvent())
         }
     }
@@ -48,4 +52,8 @@ class EventHandlerImpl(
                         queryDatabase.moveLocation(event.itemToMove, event.vector)
                 }
             }
+
+    override fun getAverageRecieveTime(): Double {
+        return timestampList.average()
+    }
 }
