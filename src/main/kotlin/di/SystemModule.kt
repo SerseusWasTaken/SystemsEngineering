@@ -21,9 +21,9 @@ object SystemModule {
 
     val queryModel: QueryModel = QueryModelImpl(queryDatabase)
 
-    val eventHandler: EventHandler = EventHandlerImpl(eventStore, queryDatabase)
+    val eventHandler: EventHandler = EventHandlerImpl(queryDatabase)
 
-    val domainModel: DomainModel = DomainModelImpl(eventStore)
+    val domainModel: DomainModel = DomainModelImpl()
 
     val handler: CommandHandler = CommandHandler(domainModel)
 }

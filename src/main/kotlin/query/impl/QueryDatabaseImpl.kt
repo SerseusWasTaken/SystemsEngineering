@@ -20,7 +20,7 @@ class QueryDatabaseImpl(val data: MutableMap<String, MovingItemDTO>): QueryDatab
     override fun moveLocation(id: String, vector: IntArray) {
         val oldItem = data[id]
         oldItem?.apply {
-            data.replace(id, MovingItemDTOImpl(name, vector, moves + 1, value))
+            data.replace(id, MovingItemDTOImpl(name, vector.addValues(oldItem.location), moves + 1, value))
         }
     }
 

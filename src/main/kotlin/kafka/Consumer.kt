@@ -22,4 +22,8 @@ class Consumer(props: Properties, topics: List<String>) {
 
     fun getEvents() = consumer.poll(1.seconds.toJavaDuration()).map { it.value().deserializeToEvent() }
 
+    fun resetOffset() {
+        consumer.seekToBeginning(consumer.assignment())
+    }
+
 }

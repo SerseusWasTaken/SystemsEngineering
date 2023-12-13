@@ -1,14 +1,10 @@
 package integration.di
 
 import command.impl.CommandHandler
-import command.api.DomainModel
-import command.api.EventStore
 import command.impl.DomainModelImpl
 import command.impl.EventStoreImpl
-import handler.EventHandler
 import handler.EventHandlerImpl
 import io.mockk.spyk
-import query.api.QueryDatabase
 import query.api.QueryModel
 import query.impl.QueryDatabaseImpl
 import query.impl.QueryModelImpl
@@ -22,9 +18,9 @@ object TestModule {
 
     val queryModel: QueryModel = spyk(QueryModelImpl(queryDatabase))
 
-    val eventHandler: EventHandlerImpl = spyk(EventHandlerImpl(eventStore, queryDatabase))
+    val eventHandler: EventHandlerImpl = spyk(EventHandlerImpl(queryDatabase))
 
-    val domainModel: DomainModelImpl = spyk(DomainModelImpl(eventStore))
+    val domainModel: DomainModelImpl = spyk(DomainModelImpl())
 
     val handler: CommandHandler = spyk(CommandHandler(domainModel))
 }
