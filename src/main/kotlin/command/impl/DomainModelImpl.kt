@@ -17,12 +17,10 @@ class DomainModelImpl(
     val eventStore: EventStore,
     private val itemStore: MutableMap<String, MovingItem> = mutableMapOf()
 ) : DomainModel {
-    // This stuff probably has to get moved to the command handler and is tightly coupled here
-    val connectionFactory = ActiveMQConnectionFactory("tcp://localhost:61616")
-    val connection = connectionFactory.createConnection("command", "command")
-    val session: Session
-    val destination: Queue
-    val producer: MessageProducer
+    val props = Properties()
+    val producer: KafkaProducer<String, String>
+
+
     init {
         props.setProperty("bootstrap.servers", "localhost:${environment.brokers.first().port}")
         props.setProperty("security.protocol", "PLAINTEXT")
