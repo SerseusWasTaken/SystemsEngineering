@@ -9,6 +9,15 @@ import jakarta.jms.TextMessage
 import org.apache.activemq.ActiveMQConnectionFactory
 import query.api.QueryDatabase
 import query.impl.MovingItemDTOImpl
+import java.util.*
+import environment
+import kafka.Consumer
+import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.StringSerializer
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toJavaDuration
 
 class EventHandlerImpl(
         private val eventStore: EventStore,
@@ -20,20 +29,18 @@ class EventHandlerImpl(
     val consumer = Consumer(props, listOf("allEvents"))
 
     init {
-        connection.start()
-        session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)
-        destination = session.createQueue("MovingItems.Events")
-        consumer = session.createConsumer(destination)
+        props.setProperty("bootstrap.servers", "localhost:${environment.brokers.first().port}")
+        props.setProperty("security.protocol", "PLAINTEXT")
+        props.setProperty("group.id", "group1")
     }
 
 
     override fun fetchEvent() {
-        val msg = consumer.receive()
-        if (msg is TextMessage) {
-            val timeToRecieve = System.currentTimeMillis() - msg.getLongProperty("timestamp")
-            println("Recieved msg: ${msg.text.deserializeToEvent()} and timestamp: $timeToRecieve")
-            timestampList.add(timeToRecieve)
-            handleEvent(msg.text.deserializeToEvent())
+        val d = 1.seconds
+        val msg = consumer.getEvents()
+        msg.forEach{
+            println("Recieved msg: $it")
+            handleEvent(it)
         }
     }
 

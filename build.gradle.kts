@@ -9,6 +9,9 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven {
+        url = uri("https://packages.confluent.io/maven/")
+    }
 }
 
 dependencies {
@@ -36,6 +39,9 @@ dependencies {
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("io.mockk:mockk-agent:1.13.8")
     testImplementation("io.kotest:kotest-runner-junit5:5.8.0")
+
+    implementation("no.nav:kafka-embedded-env:3.2.4")
+    implementation("org.apache.kafka:kafka-clients:3.2.4")
 }
 
 tasks.test {
