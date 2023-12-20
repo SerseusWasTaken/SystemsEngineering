@@ -6,9 +6,9 @@ import java.util.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
 
-class Consumer(props: Properties, topics: List<String>) {
+class Consumer(topics: List<String>, conf: Properties.() -> Unit) {
     val consumer: KafkaConsumer<String, String> = KafkaConsumer(
-        props,
+        Properties().apply(conf),
         org.apache.kafka.common.serialization.StringDeserializer(),
         org.apache.kafka.common.serialization.StringDeserializer()
     )

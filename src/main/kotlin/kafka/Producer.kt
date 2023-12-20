@@ -5,9 +5,9 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
 import java.util.*
 
-class Producer(props: Properties) {
+class Producer(conf: Properties.() -> Unit) {
     val producer = KafkaProducer(
-        props,
+        Properties().apply(conf),
         StringSerializer(),
         StringSerializer()
     )

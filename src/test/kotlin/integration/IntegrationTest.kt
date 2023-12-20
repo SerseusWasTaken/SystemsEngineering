@@ -15,7 +15,7 @@ import java.util.Collections
 import java.util.Enumeration
 
 class IntegrationTest {
-    // Tests are broken right now when run sequentially but work just fine if run on their own
+    // Tests are broken right now
 
     @AfterEach
     fun teardown() {

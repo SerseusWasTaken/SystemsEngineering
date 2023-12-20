@@ -9,20 +9,10 @@ import environment
 import kafka.Consumer
 
 class EventHandlerImpl(
-        private val queryDatabase: QueryDatabase
+        private val queryDatabase: QueryDatabase,
+        val consumer: Consumer
 ) : EventHandler {
     private val timestampList = mutableListOf<Long>()
-
-    val props = Properties()
-    val consumer: Consumer
-
-    init {
-        props.setProperty("bootstrap.servers", "localhost:${environment.brokers.first().port}")
-        props.setProperty("security.protocol", "PLAINTEXT")
-        props.setProperty("group.id", "group1")
-        consumer = Consumer(props, listOf("allEvents"))
-    }
-
 
     override fun fetchEvent() {
         consumer.getEvents().forEach {

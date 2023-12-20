@@ -11,24 +11,9 @@ import query.utils.addValues
 import java.util.Properties
 
 class DomainModelImpl(
-) : DomainModel {
-
-    val producer: Producer
+    val producer: Producer,
     val consumer: Consumer
-
-    init {
-        val producerProps = Properties()
-        producerProps.setProperty("bootstrap.servers", "localhost:${environment.brokers.first().port}")
-        producerProps.setProperty("security.protocol", "PLAINTEXT")
-        producer = Producer(producerProps)
-
-        val consumerProps = Properties()
-        consumerProps.setProperty("bootstrap.servers", "localhost:${environment.brokers.first().port}")
-        consumerProps.setProperty("group.id", "group2")
-        consumerProps.setProperty("security.protocol", "PLAINTEXT")
-        consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        consumer = Consumer(consumerProps, listOf("allEvents"))
-    }
+) : DomainModel {
 
     private fun executeWhenIdIsNotInUse(id: String, block: () -> Unit) =
         if (!givenItemExistsCurrently(id))
@@ -96,8 +81,9 @@ class DomainModelImpl(
 
     fun givenItemExistsCurrently(id: String): Boolean {
         val lastCreateEvent = getAllEvents().indexOfLast { event -> event is CreateEvent && event.id == id}
+        val lastReplaceEvent = getAllEvents().indexOfLast { event -> event is ReplaceEvent && event.itemToMove == id}
         val lastDeleteEvent = getAllEvents().indexOfLast { event -> event is RemoveEvent && event.id == id}
-        return lastDeleteEvent < lastCreateEvent
+        return lastDeleteEvent < lastCreateEvent || lastDeleteEvent < lastReplaceEvent
     }
 
     private fun findItemPosition (id: String, existingItemEvents: List<Event>): Pair<String, IntArray> {
