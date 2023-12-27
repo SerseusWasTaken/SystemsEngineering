@@ -17,7 +17,7 @@ class DomainModelImplTest {
     lateinit var cut: DomainModelImpl
     @BeforeEach
     fun setUp() {
-        cut = DomainModelImpl(mockEventStore)
+        cut = DomainModelImpl(mockk(),mockk())
     }
 
     @AfterEach

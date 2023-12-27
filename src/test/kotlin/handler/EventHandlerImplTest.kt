@@ -9,6 +9,7 @@ import command.api.MovingItemImpl
 import io.mockk.mockk
 import io.mockk.unmockkAll
 import io.mockk.verify
+import kafka.Consumer
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 
@@ -18,12 +19,12 @@ import query.impl.QueryDatabaseImpl
 class EventHandlerImplTest {
 
     private lateinit var cut: EventHandler
-    private val mockEventStore = mockk<EventStoreImpl>(relaxed = true)
+    private val mockConsumer = mockk<Consumer>(relaxed = true)
     private val mockQueryDatabse = mockk<QueryDatabaseImpl>(relaxed = true)
 
     @BeforeEach
     fun setup() {
-        cut = EventHandlerImpl(mockEventStore, mockQueryDatabse)
+        cut = EventHandlerImpl(mockQueryDatabse, mockConsumer)
     }
     @AfterEach
     fun tearDown() {

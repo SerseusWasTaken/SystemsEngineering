@@ -1,7 +1,12 @@
 package integration
 
+import command.api.MovingItemImpl
+import command.events.*
 import integration.di.TestModule
 import io.kotest.matchers.shouldBe
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.unmockkAll
 import io.mockk.verify
 import org.apache.activemq.broker.BrokerService
 import org.apache.activemq.security.AuthenticationUser
@@ -21,11 +26,13 @@ class IntegrationTest {
     fun teardown() {
         TestModule.queryDatabase.data.clear()
         TestModule.eventStore.clear()
+        unmockkAll()
+        clearAllMocks()
     }
 
     @Test
     fun `createItem should result in query to return that item`() {
-        TestModule.handler.createItem("TestItem")
+        every { TestModule.eventHandler.consumer.getEvents() } returns listOf(CreateEvent(MovingItemImpl("TestItem", intArrayOf(0, 0, 0), 0, 0)))
         TestModule.eventHandler.fetchEvent()
         TestModule.queryModel.getMovingItems() shouldBe enumerationOf(
             MovingItemDTOImpl(
@@ -39,9 +46,11 @@ class IntegrationTest {
 
     @Test
     fun `CreateItem should create item correctly when it collides with existing item`() {
-        TestModule.handler.createItem("Item1", intArrayOf(1, 2, 3), 0)
+        every { TestModule.eventHandler.consumer.getEvents() } returns
+                listOf(CreateEvent(MovingItemImpl("Item1", intArrayOf(1, 2, 3), 0, 0)))
         TestModule.eventHandler.fetchEvent()
-        TestModule.handler.createItem("Item2", intArrayOf(1, 2, 3), 0)
+        every { TestModule.eventHandler.consumer.getEvents() } returns
+                listOf(ReplaceEvent("Item1", "Item2", intArrayOf(1,2,3), 0, true))
         TestModule.eventHandler.fetchEvent()
 
         val items = TestModule.queryModel.getMovingItems().toList()
@@ -50,9 +59,11 @@ class IntegrationTest {
 
     @Test
     fun `MoveItem should move item correctly`() {
-        TestModule.handler.createItem("Item3", intArrayOf(1, 2, 3), 0)
+        every { TestModule.eventHandler.consumer.getEvents() } returns
+                listOf(CreateEvent(MovingItemImpl("Item3", intArrayOf(1, 2, 3), 0, 0)))
         TestModule.eventHandler.fetchEvent()
-        TestModule.handler.moveItem("Item3", intArrayOf(1, 2, 3))
+        every { TestModule.eventHandler.consumer.getEvents() } returns
+                listOf(MoveEvent("Item3", intArrayOf(1,2,3)))
         TestModule.eventHandler.fetchEvent()
 
         val newLocationOfItem = TestModule.queryModel.getMovingItems().nextElement().location
@@ -61,12 +72,17 @@ class IntegrationTest {
 
     @Test
     fun `MoveItem should move item correctly when it collides`() {
-        TestModule.handler.createItem("Item5", intArrayOf(1, 2, 3), 0)
-        TestModule.eventHandler.fetchEvent()
-        TestModule.handler.createItem("Item6", intArrayOf(0, 0, 0), 0)
+
+        every { TestModule.eventHandler.consumer.getEvents() } returns
+                listOf(CreateEvent(MovingItemImpl("Item5", intArrayOf(1, 2, 3), 0, 0)))
         TestModule.eventHandler.fetchEvent()
 
-        TestModule.handler.moveItem("Item6", intArrayOf(1, 2, 3))
+        every { TestModule.eventHandler.consumer.getEvents() } returns
+                listOf(CreateEvent(MovingItemImpl("Item6", intArrayOf(0, 0, 0,), 0, 0)))
+        TestModule.eventHandler.fetchEvent()
+
+        every { TestModule.eventHandler.consumer.getEvents() } returns
+                listOf(ReplaceEvent("Item5","Item6",  intArrayOf(1, 2, 3), doCreateItem = false))
         TestModule.eventHandler.fetchEvent()
         val items = TestModule.queryModel.getMovingItems().toList()
         items.size shouldBe 1
@@ -75,11 +91,13 @@ class IntegrationTest {
 
     @Test
     fun `DeleteItem should delete Item from QueryDatabase`() {
-        TestModule.handler.createItem("Item7", intArrayOf(1, 2, 3), 0)
+        every { TestModule.eventHandler.consumer.getEvents() } returns
+                listOf(CreateEvent(MovingItemImpl("Item7", intArrayOf(1, 2, 3), 0, 0)))
         TestModule.eventHandler.fetchEvent()
         TestModule.queryModel.getMovingItems().toList().size shouldBe 1
 
-        TestModule.handler.deleteItem("Item7")
+        every { TestModule.eventHandler.consumer.getEvents() } returns
+                listOf(DeleteEvent("Item7"))
         TestModule.eventHandler.fetchEvent()
 
         verify { TestModule.queryDatabase.deleteItem("Item7") }

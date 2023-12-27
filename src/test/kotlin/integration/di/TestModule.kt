@@ -21,9 +21,9 @@ object TestModule {
 
     val queryModel: QueryModel = spyk(QueryModelImpl(queryDatabase))
 
-    val eventHandler: EventHandlerImpl = spyk(EventHandlerImpl(queryDatabase, mockk<Consumer>()))
+    val eventHandler: EventHandlerImpl = EventHandlerImpl(queryDatabase, mockk<Consumer>())
 
-    val domainModel: DomainModelImpl = spyk(DomainModelImpl(mockk<Producer>(), mockk<Consumer>()))
+    val domainModel: DomainModelImpl = spyk(DomainModelImpl(mockk<Producer>(relaxed = true), mockk<Consumer>(relaxed = true)))
 
     val handler: CommandHandler = spyk(CommandHandler(domainModel))
 }
