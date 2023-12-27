@@ -1,72 +1,28 @@
 import di.SystemModule
+import kafka.KafkaInitilizer
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import no.nav.common.KafkaEnvironment
-import org.apache.activemq.broker.BrokerService
-import org.apache.activemq.security.AuthenticationUser
-import org.apache.activemq.security.SimpleAuthenticationPlugin
+import utils.RandomDataGenerator
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
-val environment = KafkaEnvironment(
-    topicNames = listOf("allEvents"),
-    //autoStart = true,
-    noOfBrokers = 1
-)
-fun main(args: Array<String>) = runBlocking {
-    environment.start()
-    val commandHandler = SystemModule.handler
-    val queryDatabase = SystemModule.queryDatabase
-    val eventHandler = SystemModule.eventHandler
-
-
-    GlobalScope.launch {
-        while (true) {
-            eventHandler.fetchEvent()
+fun main(args: Array<String>)  {
+    KafkaInitilizer.createTopic("data", 1)
+    val consumer = SpeedConsumer()
+    val producer = SpeedProducer(RandomDataGenerator(5, 1,1000, 25.0), "data")
+    runBlocking {
+        launch {
+            while (true) producer.produceData()
+        }
+        launch {
+            while (true) {
+                delay(5000)
+                consumer.getAndConsumeData()
+                consumer.calculateAverageSpeedWithSlidingWindow(consumer.getAndConsumeData(), 30.minutes)
+            }
         }
     }
 
-     
-    runBlocking {
-        delay(10000L)
-        commandHandler.createItem("Item1")
-        delay(1000)
-        commandHandler.moveItem("Item1", intArrayOf(1,2,3))
-        delay(1000)
-        println(queryDatabase.getItem("Item1")?.location?.toList())
-        delay(1000)
-        commandHandler.moveItem("Item1", intArrayOf(1,2,3))
-        delay(1000)
-        println(queryDatabase.getItem("Item1")?.location?.toList())
-        delay(1000)
-        //Should result in a replace event
-        commandHandler.createItem("Item2", intArrayOf(2,4,6), 0)
-        delay(1000)
-        //Expect null here
-        println(queryDatabase.getItem("Item1")?.location?.toList())
-        delay(1000)
-        commandHandler.createItem("Item2", intArrayOf(2,4,7), 0)
-        delay(1000)
-        commandHandler.createItem("Item2", intArrayOf(2,4,7), 0)
-    }
-
-
-}
-
-fun initBroker(): BrokerService {
-    val broker = BrokerService()
-    broker.brokerName = "MovingItemBroker"
-    broker.setDataDirectory("brokerData/")
-    val auth = SimpleAuthenticationPlugin()
-    auth.setUsers(
-        listOf(
-            AuthenticationUser("query", "query", "consumers"),
-            AuthenticationUser("command", "command", "publishers")
-        )
-    )
-    broker.plugins = arrayOf(auth)
-    broker.addConnector("tcp://localhost:61616")
-    broker.addConnector("tcp://localhost:1883")
-    broker.start()
-    return broker
 }

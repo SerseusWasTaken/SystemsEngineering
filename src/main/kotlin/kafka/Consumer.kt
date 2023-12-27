@@ -1,6 +1,6 @@
 package kafka
 
-import command.events.deserializeToEvent
+import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
@@ -20,7 +20,7 @@ class Consumer(topics: List<String>, conf: Properties.() -> Unit) {
 
 
 
-    fun getEvents() = consumer.poll(1.seconds.toJavaDuration()).map { it.value().deserializeToEvent() }
+    fun getData(): ConsumerRecords<String, String> = consumer.poll(1.seconds.toJavaDuration())
 
     fun resetOffset() {
         consumer.seekToBeginning(consumer.assignment())
