@@ -11,16 +11,17 @@ import kotlin.time.Duration.Companion.seconds
 fun main(args: Array<String>)  {
     KafkaInitilizer.createTopic("data", 1)
     val consumer = SpeedConsumer()
-    val producer = SpeedProducer(RandomDataGenerator(5, 1,1000, 25.0), "data")
+    val producer = SpeedProducer(RandomDataGenerator(5, 1000,1000, 0.0), "data")
     runBlocking {
         launch {
             while (true) producer.produceData()
+            
         }
         launch {
             while (true) {
                 delay(5000)
                 consumer.getAndConsumeData()
-                consumer.calculateAverageSpeedWithSlidingWindow(consumer.getAndConsumeData(), 30.minutes)
+                consumer.calculateAverageSpeedWithSlidingWindow(30.seconds)
             }
         }
     }
