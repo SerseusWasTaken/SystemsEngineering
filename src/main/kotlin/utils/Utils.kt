@@ -15,6 +15,9 @@ object Utils {
     }
 
     fun Double.round(decimals: Int): Double {
-        return this.toBigDecimal().setScale(decimals, RoundingMode.HALF_UP).toDouble()
+        return if(!this.isNaN())
+            this.toBigDecimal().setScale(decimals, RoundingMode.HALF_UP).toDouble()
+        else
+            this
     }
 }
