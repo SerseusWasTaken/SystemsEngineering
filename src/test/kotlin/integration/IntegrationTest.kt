@@ -1,18 +1,24 @@
 package integration
 
+import integration.di.TestModule
+import io.kotest.matchers.shouldBe
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.unmockkAll
 import io.mockk.verify
-import org.apache.activemq.broker.BrokerService
-import org.apache.activemq.security.AuthenticationUser
-import org.apache.activemq.security.SimpleAuthenticationPlugin
+import kafka.Consumer
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import kotlinx.datetime.Clock
+import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
+import utils.Measurement
+import kotlin.test.Test
+import kotlin.time.Duration.Companion.milliseconds
 
 
 class IntegrationTest {
-    // Tests are broken right now
 
     @AfterEach
     fun teardown() {
@@ -20,26 +26,17 @@ class IntegrationTest {
         clearAllMocks()
     }
 
+    @Test
+    fun `values from the future should not fall into current time window`(): Unit = runBlocking {
+        every { TestModule.mockConsumer.getData() } returns listOf(Measurement(Clock.System.now(), 1, listOf(1.0)))
+        TestModule.speedConsumer.getAndConsumeData()
+        TestModule.speedConsumer.calculateAverageSpeedWithSlidingWindow(10.milliseconds)
+        delay(10.milliseconds)
+        every { TestModule.mockConsumer.getData() } returns listOf(Measurement(Clock.System.now() + 1000.milliseconds, 1, listOf(1.0)))
+        TestModule.speedConsumer.getAndConsumeData()
+        TestModule.speedConsumer.calculateAverageSpeedWithSlidingWindow(10.milliseconds)
 
-    companion object {
-        lateinit var broker: BrokerService
-        @BeforeAll
-        @JvmStatic
-        fun setup() {
-            broker = BrokerService()
-            broker.brokerName = "MovingItemBroker"
-            broker.setDataDirectory("brokerData/")
-            val auth = SimpleAuthenticationPlugin()
-            auth.setUsers(
-                listOf(
-                    AuthenticationUser("query", "query", "consumers"),
-                    AuthenticationUser("command", "command", "publishers")
-                )
-            )
-            broker.plugins = arrayOf(auth)
-            broker.addConnector("tcp://localhost:61616")
-            broker.addConnector("tcp://localhost:1883")
-            broker.start()
-        }
+        TestModule.speedConsumer.lastTimeWindowValues.size shouldBe 1
+
     }
 }

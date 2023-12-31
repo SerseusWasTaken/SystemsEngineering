@@ -5,6 +5,7 @@ import utils.Measurement
 import utils.Utils.round
 import kotlin.time.Duration
 import kotlinx.datetime.Clock
+import org.jetbrains.annotations.VisibleForTesting
 
 class SpeedConsumer(
     val consumer: Consumer = Consumer(listOf("data")) {
@@ -15,14 +16,13 @@ class SpeedConsumer(
         // setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
     }
 ) {
-
-    //TODO:("Caching von Werten")
-    private val measurements = mutableMapOf<Int, List<Measurement>>()
+    @VisibleForTesting
+    val measurements = mutableMapOf<Int, List<Measurement>>()
     private var currentStartTime: Instant = Clock.System.now()
-    private val currentTimeWindowValues = mutableMapOf<Int, List<Double>>()
-    private val lastTimeWindowValues = mutableMapOf<Int, List<Double>>()
+    val currentTimeWindowValues = mutableMapOf<Int, List<Double>>()
+    val lastTimeWindowValues = mutableMapOf<Int, List<Double>>()
     fun getAndConsumeData(): List<Measurement> {
-        val data = consumer.getData().map { Measurement.getFromJSON(it.value()) }.map { measurement ->
+        val data = consumer.getData().map { measurement ->
             Measurement(measurement.time, measurement.sensor, measurement.values.map { (it * 3.6).round(2) }.filter { it > 0 })
         }
 

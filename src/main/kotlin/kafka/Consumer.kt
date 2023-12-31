@@ -2,6 +2,7 @@ package kafka
 
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import utils.Measurement
 import java.util.*
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -20,7 +21,7 @@ class Consumer(topics: List<String>, conf: Properties.() -> Unit) {
 
 
 
-    fun getData(): ConsumerRecords<String, String> = consumer.poll(1.seconds.toJavaDuration())
+    fun getData(): List<Measurement> = consumer.poll(1.seconds.toJavaDuration()).map { Measurement.getFromJSON(it.value()) }
 
     fun resetOffset() {
         consumer.seekToBeginning(consumer.assignment())
