@@ -8,6 +8,7 @@ import kotlinx.datetime.Clock
 import org.jetbrains.annotations.VisibleForTesting
 
 class SpeedConsumer(
+    val windowSize: Duration,
     val consumer: Consumer = Consumer(listOf("data")) {
         setProperty("bootstrap.servers", "localhost:29092")
         setProperty("security.protocol", "PLAINTEXT")
@@ -20,7 +21,11 @@ class SpeedConsumer(
     val measurements = mutableMapOf<Int, List<Measurement>>()
     private var currentStartTime: Instant = Clock.System.now()
     val currentTimeWindowValues = mutableMapOf<Int, List<Double>>()
-    val lastTimeWindowValues = mutableMapOf<Int, List<Double>>()
+    val averageOfPast = mutableListOf<Pair<Map<Int, List<Double>>, Instant>>()
+
+    init {
+        averageOfPast.clear()
+    }
     fun getAndConsumeData(): List<Measurement> {
         val data = consumer.getData().map { measurement ->
             Measurement(measurement.time, measurement.sensor, measurement.values.map { (it * 3.6).round(2) }.filter { it > 0 })
@@ -34,8 +39,7 @@ class SpeedConsumer(
         return data
     }
 
-    fun calculateAverageSpeedWithSlidingWindow(windowSize: Duration) {
-
+    fun calculateAverageSpeedWithinTimeWindow() {
         val dataWithStartingTime = measurements.map {
             it.key to it.value.filter { measurement -> measurement.isMeasurmentToBeUsed(currentStartTime, windowSize) }
         }
@@ -61,13 +65,39 @@ class SpeedConsumer(
             //print final results of time window
             println("Ergebnis für das Zeitfenster $currentStartTime ist: $res")
 
-            lastTimeWindowValues.clear()
-            lastTimeWindowValues.putAll(currentTimeWindowValues)
+            averageOfPast.add(emptyMap<Int, MutableList<Double>>().toMutableMap().apply {
+                res.forEach {
+                    if (this.containsKey(it.first))
+                        this[it.first]?.add(it.second)
+                    else
+                        this[it.first] = mutableListOf(it.second)
+                }
+            }.toMap() to currentStartTime)
             currentTimeWindowValues.clear()
             currentStartTime = Clock.System.now()
         }
         else
             println("Zwischenergebnis für Zeitfenster $currentStartTime: $res")
+    }
+
+    //Aufgabenteil 1
+    fun getAverageSpeedOverTimeBySensor(sensor: Int): List<Double> {
+        return averageOfPast.map { it.first.filter { it.key == sensor }.flatMap { it.value } }.flatten()
+    }
+
+    //Aufgabenteil 2
+    fun getAverageOfRoad(time: Instant, vararg sensors: Int): Map<Int, List<Double>> {
+        val filteredForTime = averageOfPast.find { it.second.isOtherWithinTimeWindow(time) }?.first
+        if (filteredForTime == null)
+            error("Given time is not within any timeWindow!")
+        val filteredForSensors = filteredForTime.filter { sensors.contains(it.key) }
+        return filteredForSensors
+    }
+
+    fun Instant.isOtherWithinTimeWindow(other: Instant): Boolean {
+        val isInPast = this > other
+        val isAfterTimeWindow = (this + this@SpeedConsumer.windowSize) < other
+        return !isInPast && !isAfterTimeWindow
     }
 
     fun Measurement.isMeasurmentToBeUsed(startingTime: Instant, windowSize: Duration): Boolean {
