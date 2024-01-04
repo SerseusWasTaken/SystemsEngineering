@@ -5,9 +5,6 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.milliseconds
 
-
-
-
 class RandomDataGenerator(
     val numberOfSensors: Int, val m1: Int, val m2: Int, val likelihoodOfGettingNoMeasurement: Double
 ) {

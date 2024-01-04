@@ -14,18 +14,14 @@ class SpeedConsumer(
         setProperty("security.protocol", "PLAINTEXT")
         setProperty("group.id", "group1")
         setProperty(ConsumerConfig.CLIENT_ID_CONFIG, "SpeedConsumer1")
-        // setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest")
     }
 ) {
     @VisibleForTesting
     val measurements = mutableMapOf<Int, List<Measurement>>()
     private var currentStartTime: Instant = Clock.System.now()
     val currentTimeWindowValues = mutableMapOf<Int, List<Double>>()
-    val averageOfPast = mutableListOf<Pair<Map<Int, List<Double>>, Instant>>()
+    val averageOfPast = emptyList<Pair<Map<Int, List<Double>>, Instant>>().toMutableList()
 
-    init {
-        averageOfPast.clear()
-    }
     fun getAndConsumeData(): List<Measurement> {
         val data = consumer.getData().map { measurement ->
             Measurement(measurement.time, measurement.sensor, measurement.values.map { (it * 3.6).round(2) }.filter { it > 0 })
@@ -41,14 +37,14 @@ class SpeedConsumer(
 
     fun calculateAverageSpeedWithinTimeWindow() {
         val dataWithStartingTime = measurements.map {
-            it.key to it.value.filter { measurement -> measurement.isMeasurmentToBeUsed(currentStartTime, windowSize) }
+            it.key to it.value
+                .filter { measurement -> measurement.isMeasurmentToBeUsed(currentStartTime, windowSize) }
         }
         //Update leftover measurements
         dataWithStartingTime.forEach { intListPair ->
             if (measurements[intListPair.first] != null) {
                 val notYetUsedMeasurements = measurements[intListPair.first]!!.subtract(intListPair.second.toSet())
                 measurements.replace(intListPair.first, notYetUsedMeasurements.toList())
-
             }
             if (currentTimeWindowValues[intListPair.first] != null) {
                 currentTimeWindowValues[intListPair.first] =

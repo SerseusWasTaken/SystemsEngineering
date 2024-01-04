@@ -14,7 +14,6 @@ object KafkaInitilizer {
         config[AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG] = server
         try {
             AdminClient.create(config).use { adminClient ->
-                // Create a new topic with one partition
                 val newTopic = NewTopic(topicName, numPartitions, 1.toShort())
                 adminClient.createTopics(setOf(newTopic)).all().get()
                 println("Topic $topicName created successfully with $numPartitions partition.")
