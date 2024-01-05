@@ -32,6 +32,14 @@ dependencies {
 
     implementation("org.apache.kafka:kafka-clients:3.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
+
+
+    implementation("org.apache.beam:beam-sdks-java-core:2.52.0")
+    implementation("org.apache.beam:beam-sdks-java-io-kafka:2.52.0")
+    implementation("org.apache.beam:beam-runners-direct-java:2.52.0")
+
+
+
 }
 
 tasks.test {
@@ -39,10 +47,10 @@ tasks.test {
 }
 
 kotlin {
-    jvmToolchain(19)
+    jvmToolchain(17)
 }
 
 application {
     mainClass.set("MainKt")
 }
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> { kotlinOptions.jvmTarget = "19" }
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> { kotlinOptions.jvmTarget = "17" }
