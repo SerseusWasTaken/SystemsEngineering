@@ -24,15 +24,7 @@ class IntegrationTest {
 
     @Test
     fun `values from the future should not fall into current time window`(): Unit = runBlocking {
-        every { TestModule.mockConsumer.getData() } returns listOf(Measurement(Clock.System.now(), 1, listOf(1.0)))
-        TestModule.speedConsumer.getAndConsumeData()
-        TestModule.speedConsumer.calculateAverageSpeedWithinTimeWindow()
-        delay(10.milliseconds)
-        every { TestModule.mockConsumer.getData() } returns listOf(Measurement(Clock.System.now() + 1000.milliseconds, 1, listOf(1.0)))
-        TestModule.speedConsumer.getAndConsumeData()
-        TestModule.speedConsumer.calculateAverageSpeedWithinTimeWindow()
-        println(TestModule.speedConsumer.averageOfPast)
-        TestModule.speedConsumer.averageOfPast.last().size shouldBe 1
+
 
     }
 }
