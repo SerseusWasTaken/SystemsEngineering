@@ -1,33 +1,33 @@
 import kafka.KafkaInitilizer
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
-import kotlinx.datetime.toJavaInstant
-import kotlinx.serialization.json.Json
 import org.apache.beam.runners.direct.DirectRunner
 import org.apache.beam.sdk.Pipeline
 import org.apache.beam.sdk.coders.StringUtf8Coder
-import org.apache.beam.sdk.coders.VoidCoder
 import org.apache.beam.sdk.io.kafka.KafkaIO
 import org.apache.beam.sdk.options.PipelineOptionsFactory
+import org.apache.beam.sdk.schemas.transforms.Group
 import org.apache.beam.sdk.transforms.*
+import org.apache.beam.sdk.transforms.Combine.CombineFn
 import org.apache.beam.sdk.transforms.windowing.AfterPane
+import org.apache.beam.sdk.transforms.windowing.AfterProcessingTime
+import org.apache.beam.sdk.transforms.windowing.AfterWatermark
 import org.apache.beam.sdk.transforms.windowing.FixedWindows
+import org.apache.beam.sdk.transforms.windowing.Never
 import org.apache.beam.sdk.transforms.windowing.Repeatedly
 import org.apache.beam.sdk.transforms.windowing.Window
 import org.apache.beam.sdk.values.KV
 import org.apache.beam.sdk.values.PCollection
-import org.apache.beam.sdk.values.POutput
-import org.apache.beam.sdk.values.TypeDescriptor
+import org.apache.beam.vendor.grpc.v1p54p0.io.opencensus.stats.Aggregation.LastValue
+
 import org.apache.kafka.common.serialization.StringDeserializer
-import org.joda.time.DateTime
 import org.joda.time.Duration
 import org.joda.time.Instant
 import utils.Measurement
 import utils.RandomDataGenerator
 import kotlin.time.Duration.Companion.seconds
+import utils.Utils.round
 
 fun main(args: Array<String>) {
     val options = PipelineOptionsFactory.create()
@@ -44,17 +44,20 @@ fun main(args: Array<String>) {
         .setCoder(StringUtf8Coder.of())
         .filterForEmptyValues()
         .filterForNegativeValues()
-        //.print()
+        .toKMH()
         .extractTimestamp()
         .toKeyValuePair()
         .flatten()
-        .print()
-        .getSpeedOverTime()
+        .calculateAverages()
+
+
+    dataset.getAverageSpeedOfSensor(3).print()
+    dataset.getAverageSpeedOfSensors(1,2,3).print()
+
 
 
     KafkaInitilizer.createTopic("data", 4)
-    val consumer = SpeedConsumer(30.seconds)
-    val producer = SpeedProducer(RandomDataGenerator(5, 1000, 1000, 25.0), "data")
+    val producer = SpeedProducer(RandomDataGenerator(5, 1000, 1000, 0.0), "data")
     runBlocking {
         launch(Dispatchers.IO) {
             while (true) producer.produceData()
@@ -63,6 +66,18 @@ fun main(args: Array<String>) {
             pipeline.run().waitUntilFinish()
         }
     }
+}
+
+
+fun PCollection<String>.toKMH(): PCollection<String> {
+    return this.apply("toKMH", ParDo.of(object : DoFn<String, String>() {
+        @ProcessElement
+        fun processElement(@Element input: String, out: OutputReceiver<String>) {
+            val measurement = Measurement.getFromJSON(input)
+            val newMeasurement = Measurement(measurement.time, measurement.sensor, measurement.values.map { (it * 3.6).round(2) })
+            out.output(newMeasurement.serialize())
+        }
+    }))
 }
 
 fun <T> PCollection<T>.print(): PCollection<T> {
@@ -127,12 +142,31 @@ fun PCollection<KV<Int, java.util.List<Double>>>.flatten(): PCollection<KV<Int, 
     }))
 }
 
-//Aufgabe1
-fun PCollection<KV<Int, Double>>.getSpeedOverTime(): PCollection<KV<Int, Double>> {
-    return this.apply("SpeedOverTime", Window.into<KV<Int, Double>>(FixedWindows.of(Duration.standardSeconds(30)))
+fun PCollection<KV<Int, Double>>.calculateAverages(): PCollection<KV<Int, Double>> {
+    return this.apply("calculateAverages", Window.into<KV<Int, Double>>(FixedWindows.of(Duration.standardSeconds(30)))
         .triggering(Repeatedly.forever(AfterPane.elementCountAtLeast(1)))
         .withAllowedLateness(Duration.standardSeconds(10))
         .accumulatingFiredPanes())
     .apply(Mean.perKey())
-    .print()
+}
+
+//Aufgabe1
+fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensor(sensor: Int): PCollection<KV<Int, Double>> {
+    return this.apply("getAverageSppedOfSensor", Filter.by(object : SerializableFunction<KV<Int, Double>, Boolean> {
+        override fun apply(input: KV<Int, Double>): Boolean {
+            return input.key == sensor
+        }
+    }))
+}
+ //.triggering(Repeatedly.forever(AfterPane.elementCountAtLeast(1)))
+
+//Aufgabe2
+
+fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensors(vararg sensors: Int): PCollection<Iterable<KV<Int, Double>>> {
+    return this.apply("calculateAverages", Window.into<KV<Int, Double>>(FixedWindows.of(Duration.standardSeconds(30)))
+        .triggering(Never.ever())
+        .withAllowedLateness(Duration.standardSeconds(10), Window.ClosingBehavior.FIRE_ALWAYS)
+        .discardingFiredPanes())
+    //TODO(THIS??)
+    .apply(Group.globally())
 }
