@@ -2,7 +2,6 @@ package utils
 
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlin.time.Duration.Companion.milliseconds
 
 class RandomDataGenerator(
