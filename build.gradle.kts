@@ -33,10 +33,13 @@ dependencies {
     implementation("org.apache.kafka:kafka-clients:3.6.1")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
+    implementation("com.espertech:esper-common:8.9.0")
+    implementation("com.espertech:esperio-kafka:8.9.0")
+    implementation("com.espertech:esper-runtime:8.9.0")
+    implementation("com.espertech:esper-compiler:8.9.0")
 
-    implementation("org.apache.beam:beam-sdks-java-core:2.52.0")
-    implementation("org.apache.beam:beam-sdks-java-io-kafka:2.52.0")
-    implementation("org.apache.beam:beam-runners-direct-java:2.52.0")
+
+
 
 
 

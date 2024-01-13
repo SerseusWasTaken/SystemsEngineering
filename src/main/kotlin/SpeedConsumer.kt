@@ -24,7 +24,7 @@ class SpeedConsumer(
 
     fun getAndConsumeData(): List<Measurement> {
         val data = consumer.getData().map { measurement ->
-            Measurement(measurement.time, measurement.sensor, measurement.values.map { (it * 3.6).round(2) }.filter { it > 0 })
+            Measurement(measurement.time, measurement.sensor, measurement.doubleList.map { (it * 3.6).round(2) }.filter { it > 0 })
         }
 
         val dataGrouped = data.groupBy { it.sensor }
@@ -48,9 +48,9 @@ class SpeedConsumer(
             }
             if (currentTimeWindowValues[intListPair.first] != null) {
                 currentTimeWindowValues[intListPair.first] =
-                    intListPair.second.flatMap { it.values } + currentTimeWindowValues[intListPair.first]!!
+                    intListPair.second.flatMap { it.doubleList } + currentTimeWindowValues[intListPair.first]!!
             } else {
-                currentTimeWindowValues[intListPair.first] = intListPair.second.flatMap { it.values }
+                currentTimeWindowValues[intListPair.first] = intListPair.second.flatMap { it.doubleList }
             }
 
         }

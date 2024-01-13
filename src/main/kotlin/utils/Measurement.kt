@@ -6,10 +6,10 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 @Serializable
-data class Measurement(val time: Instant, val sensor: Int, val values: List<Double>) {
+data class Measurement(val time: Instant, val sensor: Int, val doubleList: List<Double>) {
     override fun toString(): String {
         var baseString = "$time $sensor"
-        values.forEach { baseString += " $it," }
+        doubleList.forEach { baseString += " $it," }
         return baseString.trim(',')
     }
 
