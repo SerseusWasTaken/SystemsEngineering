@@ -22,9 +22,11 @@ fun main(args: Array<String>)  {
             }
         }
         launch {
+            delay(5.seconds)
             while (true) {
-                delay(32.seconds)
-                println("Average over time for 1,2,3: ${consumer.getAverageOfRoad(Clock.System.now() - 25.seconds, 1,2,3)}")
+                delay(30.seconds)
+                println("Average over time for 1,2,3: ${consumer.getAverageOfRoad(Clock.System.now() - 33.seconds, 1,2,3)}")
+                println("Average over time for sensor 1: ${consumer.getAverageSpeedOverTimeBySensor(1)}")
             }
         }
     }

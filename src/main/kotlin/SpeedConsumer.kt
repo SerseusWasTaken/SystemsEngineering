@@ -57,9 +57,8 @@ class SpeedConsumer(
         val res = currentTimeWindowValues.map { it.key to it.value.average().round(2) }.sortedBy { it.first }
 
         if ((currentStartTime + windowSize) < Clock.System.now()) {
-            println("Neues Zeitfenster")
             //print final results of time window
-            println("Ergebnis für das Zeitfenster $currentStartTime ist: $res")
+            println("Result for time window $currentStartTime is: $res")
 
             averageOfPast.add(emptyMap<Int, MutableList<Double>>().toMutableMap().apply {
                 res.forEach {
@@ -72,8 +71,6 @@ class SpeedConsumer(
             currentTimeWindowValues.clear()
             currentStartTime = Clock.System.now()
         }
-        else
-            println("Zwischenergebnis für Zeitfenster $currentStartTime: $res")
     }
 
     //Aufgabenteil 1
@@ -82,12 +79,12 @@ class SpeedConsumer(
     }
 
     //Aufgabenteil 2
-    fun getAverageOfRoad(time: Instant, vararg sensors: Int): Map<Int, List<Double>> {
-        val filteredForTime = averageOfPast.find { it.second.isOtherWithinTimeWindow(time) }?.first
+    fun getAverageOfRoad(time: Instant, vararg sensors: Int): Pair<Instant, Map<Int, List<Double>>> {
+        val filteredForTime = averageOfPast.find { it.second.isOtherWithinTimeWindow(time) }
         if (filteredForTime == null)
             error("Given time is not within any timeWindow!")
-        val filteredForSensors = filteredForTime.filter { sensors.contains(it.key) }
-        return filteredForSensors
+        val filteredForSensors = filteredForTime.first.filter { sensors.contains(it.key) }
+        return filteredForTime.second to filteredForSensors
     }
 
     fun Instant.isOtherWithinTimeWindow(other: Instant): Boolean {
@@ -97,8 +94,6 @@ class SpeedConsumer(
     }
 
     fun Measurement.isMeasurmentToBeUsed(startingTime: Instant, windowSize: Duration): Boolean {
-        //What do we do with values in the past?
-        //TODO:("Einbau past values")
         val isWithinTimeWindow = (this.time - startingTime) <= windowSize
         return isWithinTimeWindow
     }
