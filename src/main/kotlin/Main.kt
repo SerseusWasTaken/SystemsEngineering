@@ -158,11 +158,12 @@ fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensor(sensor: Int): PCollecti
 //Aufgabe2
 
 fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensors(vararg sensors: Int): PCollection<Void> {
-    return this.apply("calculateAverages",ParDo.of(object : DoFn<KV<Int, Double>, Void>() {
+    return this.apply(Group.globally())
+    .apply("calculateAverages",ParDo.of(object : DoFn<Iterable<KV<Int, Double>>, Void>() {
         @ProcessElement
-        fun processElement(@Element input: KV<Int, Double>) {
-            if (sensors.contains(input.key))
-                println(input)
+        fun processElement(@Element input: Iterable<KV<Int, Double>>) {
+            val step = input.filter { sensors.contains(it.key) }
+            println(step)
         }
     }))
 }
