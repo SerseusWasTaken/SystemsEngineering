@@ -8,6 +8,9 @@ import org.apache.beam.sdk.coders.*
 import org.apache.beam.sdk.io.kafka.KafkaIO
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.schemas.transforms.Group
+import org.apache.beam.sdk.state.BagState
+import org.apache.beam.sdk.state.StateSpec
+import org.apache.beam.sdk.state.StateSpecs
 import org.apache.beam.sdk.transforms.*
 import org.apache.beam.sdk.transforms.windowing.AfterPane
 import org.apache.beam.sdk.transforms.windowing.FixedWindows
@@ -139,35 +142,29 @@ fun PCollection<KV<Int, java.util.List<Double>>>.flatten(): PCollection<KV<Int, 
 
 fun PCollection<KV<Int, Double>>.calculateAverages(): PCollection<KV<Int, Double>> {
     return this.apply("calculateAverages", Window.into<KV<Int, Double>>(FixedWindows.of(Duration.standardSeconds(30)))
-        .triggering(Repeatedly.forever(AfterPane.elementCountAtLeast(1)))
-        .withAllowedLateness(Duration.standardSeconds(10))
-        .accumulatingFiredPanes())
+        .triggering(Never.ever())
+        .withAllowedLateness(Duration.standardSeconds(10), Window.ClosingBehavior.FIRE_ALWAYS)
+        .discardingFiredPanes())
     .apply(Mean.perKey())
 }
 
 //Aufgabe1
 fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensor(sensor: Int): PCollection<KV<Int, Double>> {
-    return this.apply("getAverageSppedOfSensor", Filter.by(object : SerializableFunction<KV<Int, Double>, Boolean> {
-        override fun apply(input: KV<Int, Double>): Boolean {
-            return input.key == sensor
-        }
+    return this.apply("FilterBySensor", Filter.by(SerializableFunction<KV<Int, Double>, Boolean> {
+        it.key == sensor
     }))
 }
 
 //Aufgabe2
 
 fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensors(vararg sensors: Int): PCollection<Void> {
-    return this.apply("calculateAverages", Window.into<KV<Int, Double>>(FixedWindows.of(Duration.standardSeconds(30)))
-        .triggering(Never.ever())
-        .withAllowedLateness(Duration.standardSeconds(10), Window.ClosingBehavior.FIRE_ALWAYS)
-        .discardingFiredPanes())
-        .apply(Group.globally())
-        .apply("Print", ParDo.of(object : DoFn<Iterable<KV<Int, Double>>, Void>() {
+    return this.apply("calculateAverages",ParDo.of(object : DoFn<KV<Int, Double>, Void>() {
         @ProcessElement
-        fun processElement(@Element input: Iterable<KV<Int, Double>>) {
-            val step = input.filter { sensors.contains(it.key) }.reversed()
-            val res = sensors.map {id -> step.find { it.key == id } ?: KV.of(id, Double.NaN) }
-            println(res)
+        fun processElement(@Element input: KV<Int, Double>) {
+            if (sensors.contains(input.key))
+                println(input)
         }
     }))
 }
+
+
