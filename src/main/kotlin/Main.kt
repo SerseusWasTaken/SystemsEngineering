@@ -171,15 +171,3 @@ fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensors(vararg sensors: Int): 
         }
     }))
 }
-
-fun PCollection<Iterable<KV<Int, Double>>>.getValuesOfSensors(): PCollection<Void> {
-    return this.apply("Print", ParDo.of(object : DoFn<Iterable<KV<Int, Double>>, Void>() {
-        @ProcessElement
-        fun processElement(@Element input: Iterable<KV<Int, Double>>) {
-            val sensors = intArrayOf(1,2,3)
-            val step = input.filter { sensors.contains(it.key) }.reversed()
-            val res = sensors.map {id -> step.find { it.key == id } ?: KV.of(id, Double.NaN) }
-            println(res)
-        }
-    }))
-}
