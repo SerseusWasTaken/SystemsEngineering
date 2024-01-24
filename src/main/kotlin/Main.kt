@@ -17,6 +17,8 @@ import utils.RandomDataGenerator
 
 fun main(args: Array<String>) {
 
+    val speedHistory = emptyMap<Int, List<Double>>().toMutableMap()
+
     val config = Configuration()
     config.common.addEventType(Measurement::class.java)
     config.common.addEventType(FlattenedMeasurement::class.java)
@@ -51,7 +53,8 @@ fun main(args: Array<String>) {
         newData.forEach {
             val avg = it.get("averageSpeed") as Double? ?: Double.NaN
             val sensor = it.get("sensor") as Int
-            println("Sensor $sensor has average $avg")
+            addSpeedValueToMap(speedHistory, sensor, avg)
+            println("Speed over time for sensor $sensor: ${speedHistory[sensor]}")
         }
     }
 
@@ -98,6 +101,17 @@ fun main(args: Array<String>) {
     }
 
 
+}
+
+fun addSpeedValueToMap(map: MutableMap<Int, List<Double>>, sensorId: Int, speed: Double) {
+    if (map.containsKey(sensorId)) {
+        val oldSpeeds = map[sensorId]!!
+        val newList = oldSpeeds + speed
+        map[sensorId] = newList
+    }
+    else {
+        map[sensorId] = listOf(speed)
+    }
 }
 
 
