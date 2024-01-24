@@ -27,7 +27,10 @@ import utils.Measurement
 import utils.RandomDataGenerator
 import utils.Utils.round
 
+val speedHistory = emptyMap<Int, List<Double>>().toMutableMap()
 fun main(args: Array<String>) {
+
+
     val options = PipelineOptionsFactory.create()
     options.runner = (DirectRunner::class.java)
     val pipeline = Pipeline.create(options)
@@ -49,7 +52,7 @@ fun main(args: Array<String>) {
         .calculateAverages()
 
 
-    dataset.getAverageSpeedOfSensor(1).print()
+    dataset.getAverageSpeedOfSensorsOverTime()
     dataset.getAverageSpeedOfSensors(1,2,3)
 
 
@@ -151,7 +154,20 @@ fun PCollection<KV<Int, Double>>.calculateAverages(): PCollection<KV<Int, Double
 //Aufgabe1
 fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensor(sensor: Int): PCollection<KV<Int, Double>> {
     return this.apply("FilterBySensor", Filter.by(SerializableFunction<KV<Int, Double>, Boolean> {
-        it.key == sensor
+        addSpeedValueToMap(speedHistory, it.key, it.value)
+        println("Speed over time for sensor ${it.key}: ${speedHistory[it.key]}")
+        true
+    }))
+}
+
+fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensorsOverTime(): PCollection<KV<Int, Double>> {
+    return this.apply("flatten", ParDo.of(object : DoFn<KV<Int, Double>, KV<Int, Double>>() {
+        @ProcessElement
+        fun processElement(c: ProcessContext) {
+            val element = c.element()
+            addSpeedValueToMap(speedHistory, element.key, element.value)
+            println("Speed over time for sensor ${element.key}: ${speedHistory[element.key]}")
+        }
     }))
 }
 
@@ -163,9 +179,19 @@ fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensors(vararg sensors: Int): 
         @ProcessElement
         fun processElement(@Element input: Iterable<KV<Int, Double>>) {
             val step = input.filter { sensors.contains(it.key) }
-            println(step)
+            println("Speed for road $sensors is: $step")
         }
     }))
 }
 
+fun addSpeedValueToMap(map: MutableMap<Int, List<Double>>, sensorId: Int, speed: Double) {
+    if (map.containsKey(sensorId)) {
+        val oldSpeeds = map[sensorId]!!
+        val newList = oldSpeeds + speed
+        map[sensorId] = newList
+    }
+    else {
+        map[sensorId] = listOf(speed)
+    }
+}
 
