@@ -18,8 +18,6 @@ import kotlin.test.Test
 
 
 class IntegrationTest {
-
-    @Throws(EPDeployException::class, EPCompileException::class)
     fun setStatement(statement: String): SupportUpdateListener {
         val compiled = EPCompilerProvider.getCompiler().compile(statement, compilerArgs)
         val stmt = runtime.deploymentService.deploy(compiled).statements[0]
@@ -30,7 +28,8 @@ class IntegrationTest {
 
     @Test
     fun `should calculate average correctly`(): Unit = runBlocking {
-        val q5 = "@name('getAverage') select avg(speed) as averageSpeed, sensor from FlattenedMeasurement group by sensor having count(speed) > 0;\n"
+        val q5 = "@name('getAverage') select avg(speed) as averageSpeed, sensor " +
+                "from FlattenedMeasurement group by sensor having count(speed) > 0;\n"
         val listener = setStatement(q5)
         val time = Clock.System.now()
         runtime.eventService.sendEventBean(

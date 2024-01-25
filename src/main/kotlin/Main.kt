@@ -6,14 +6,13 @@ import esper.AverageSpeed
 import esper.FlattenedMeasurement
 import esper.SpeedDropEvent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 
 import utils.Measurement
 import utils.RandomDataGenerator
+import utils.Utils.round
 
 fun main(args: Array<String>) {
 
@@ -27,12 +26,11 @@ fun main(args: Array<String>) {
     val compiler = EPCompilerProvider.getCompiler()
     val compilerArgs = CompilerArguments(config)
     val q1 = "@name('getMeasurements') select time, sensor, doubleList from Measurement;\n"
-    val q3 = "@name('getAverage') select averageSpeed, sensor from AverageSpeed;\n"
-    val q5 = "insert into AverageSpeed select avg(speed) as averageSpeed, sensor, current_timestamp from FlattenedMeasurement#ext_timed_batch(time, 10 sec) group by sensor having count(speed) > 0;\n"
-    val q6 = "@name('speedDropEvent')select * from pattern [every avgSpeed1=AverageSpeed -> avgSpeed2=AverageSpeed(sensor=avgSpeed1.sensor and averageSpeed < avgSpeed1.averageSpeed - 15) where timer:within(30 seconds)];\n"
-    val q7 = "@name('getAverageForStreet') select * from pattern [every avgSpeed1=AverageSpeed(sensor=1) -> avgSpeed2=AverageSpeed(sensor=2) -> avgSpeed3=AverageSpeed(sensor=3)];\n"
-    val qTest = "@name('getAverageForStreet2') select averageSpeed, sensor from AverageSpeed#time_batch(1 sec) where sensor IN (1,2,3);\n"
-    val epCompiled = compiler.compile(q1 + q3 + q5 + q6 + q7+ qTest, compilerArgs)
+    val q2 = "@name('getAverage') select averageSpeed, sensor from AverageSpeed;\n"
+    val q4 = "insert into AverageSpeed select avg(speed) as averageSpeed, sensor, current_timestamp from FlattenedMeasurement#ext_timed_batch(time, 10 sec) group by sensor having count(speed) > 0;\n"
+    val q5 = "@name('speedDropEvent')select * from pattern [every avgSpeed1=AverageSpeed -> avgSpeed2=AverageSpeed(sensor=avgSpeed1.sensor and averageSpeed < avgSpeed1.averageSpeed - 15) where timer:within(30 seconds)];\n"
+    val q6 = "@name('getAverageForStreet') select avg(speed) as averageSpeed, sensor from FlattenedMeasurement#ext_timed_batch(time, 10 sec) where sensor IN (1,2,3) group by sensor having count(speed) > 0;\n"
+    val epCompiled = compiler.compile(q1 + q2 + q4 + q5 + q6, compilerArgs)
 
     val runtime = EPRuntimeProvider.getDefaultRuntime(config)
     runtime.initialize()
@@ -44,7 +42,9 @@ fun main(args: Array<String>) {
         val sensor = newData[0].get("sensor") as Int
         val values = newData[0].get("doubleList") as List<Double>
         val m = Measurement(time, sensor, values)
-        val flattened = m.doubleList.filter{d -> d >= 0}.map { FlattenedMeasurement(m.time.toEpochMilliseconds(), m.sensor, it) }
+        val flattened = m.doubleList
+            .filter{d -> d >= 0}
+            .map { FlattenedMeasurement(m.time.toEpochMilliseconds(), m.sensor, (it * 3.6).round(2)) }
         flattened.forEach { runtime.eventService.sendEventBean(it, "FlattenedMeasurement") }
     }
 
@@ -58,29 +58,14 @@ fun main(args: Array<String>) {
         }
     }
 
-    val getAverageForStreetStatment = runtime.deploymentService.getStatement(deployment.deploymentId, "getAverageForStreet")
-    getAverageForStreetStatment.addListener { newData, oldData, statement, runtime ->
-        /*val res = newData.map {
-
-            val avg = it.get("averageSpeed") as Double? ?: Double.NaN
-            val sensor = it.get("sensor") as Int
-            sensor to avg
-        }
-        */
-        val a1 = newData[0].get("avgSpeed1") as AverageSpeed
-        val a2 = newData[0].get("avgSpeed2") as AverageSpeed
-        val a3 = newData[0].get("avgSpeed3") as AverageSpeed
-        println("Durchschnittsgeschwindigkeiten auf Streckenabschnitt (1,2,3): ${listOf(a1.averageSpeed, a2.averageSpeed, a3.averageSpeed)}")
-    }
-
-    val getAverageForStreetStatment2 = runtime.deploymentService.getStatement(deployment.deploymentId, "getAverageForStreet2")
+    val getAverageForStreetStatment2 = runtime.deploymentService.getStatement(deployment.deploymentId, "getAverageForStreet")
     getAverageForStreetStatment2.addListener { newData, oldData, statement, runtime ->
         val res = newData.map {
             val avg = it.get("averageSpeed") as Double? ?: Double.NaN
             val sensor = it.get("sensor") as Int
             sensor to avg
         }
-        println("Test: Durchschnittsgeschwindigkeiten auf Streckenabschnitt (1,2,3): ${res}")
+        println("Durchschnittsgeschwindigkeiten auf Streckenabschnitt (1,2,3): ${res}")
     }
 
     val newAverage = runtime.deploymentService.getStatement(deployment.deploymentId, "speedDropEvent")
