@@ -166,7 +166,7 @@ fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensors(vararg sensors: Int): 
         @ProcessElement
         fun processElement(@Element input: Iterable<KV<Int, Double>>) {
             val step = input.filter { sensors.contains(it.key) }.sortedBy { it.key }
-            println("Speed for road ${sensors.toList()} is: $step")
+            println("Durchschnittsgeschwindigkeiten auf Streckenabschnitt ${sensors.toList()}: $step")
         }
     }))
 }
