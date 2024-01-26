@@ -8,14 +8,9 @@ import org.apache.beam.sdk.coders.*
 import org.apache.beam.sdk.io.kafka.KafkaIO
 import org.apache.beam.sdk.options.PipelineOptionsFactory
 import org.apache.beam.sdk.schemas.transforms.Group
-import org.apache.beam.sdk.state.BagState
-import org.apache.beam.sdk.state.StateSpec
-import org.apache.beam.sdk.state.StateSpecs
 import org.apache.beam.sdk.transforms.*
-import org.apache.beam.sdk.transforms.windowing.AfterPane
 import org.apache.beam.sdk.transforms.windowing.FixedWindows
 import org.apache.beam.sdk.transforms.windowing.Never
-import org.apache.beam.sdk.transforms.windowing.Repeatedly
 import org.apache.beam.sdk.transforms.windowing.Window
 import org.apache.beam.sdk.values.KV
 import org.apache.beam.sdk.values.PCollection
@@ -151,14 +146,6 @@ fun PCollection<KV<Int, Double>>.calculateAverages(): PCollection<KV<Int, Double
     .apply(Mean.perKey())
 }
 
-//Aufgabe1
-fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensor(sensor: Int): PCollection<KV<Int, Double>> {
-    return this.apply("FilterBySensor", Filter.by(SerializableFunction<KV<Int, Double>, Boolean> {
-        addSpeedValueToMap(speedHistory, it.key, it.value)
-        println("Speed over time for sensor ${it.key}: ${speedHistory[it.key]}")
-        true
-    }))
-}
 
 fun PCollection<KV<Int, Double>>.getAverageSpeedOfSensorsOverTime(): PCollection<KV<Int, Double>> {
     return this.apply("flatten", ParDo.of(object : DoFn<KV<Int, Double>, KV<Int, Double>>() {
