@@ -7,7 +7,7 @@ import utils.Utils.round
 
 class SpeedProducer(val generator: RandomDataGenerator, val runtime: EPRuntime) {
     suspend fun produceData() {
-        val measurement = generator.generateData(0, 0, 50)
+        val measurement = generator.generateData(4, 0, 50)
         val newM = Measurement(measurement.time, measurement.sensor, measurement.doubleList.map { (it * 3.6).round(2) })
         println("Sending: $measurement")
         runtime.eventService.sendEventBean(measurement, "Measurement")
