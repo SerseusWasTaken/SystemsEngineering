@@ -28,33 +28,33 @@ fun main(args: Array<String>) = runBlocking {
     //eventHandler.fetchEvent()
 
     commandHandler.moveItem("Item1", intArrayOf(1, 3, 0))
-    println(queryDatabase.getItem("Item1")?.location?.get(1))
-    println(queryDatabase.getItem("Item2")?.location?.get(1))
+    println("Location of Item1: ${queryDatabase.getItem("Item1")?.location?.toList()}")
+    println("Location of Item2: ${queryDatabase.getItem("Item2")?.location?.toList()}")
     //eventHandler.fetchEvent()
 
 
     commandHandler.moveItem("Item2", intArrayOf(1, 1, 0))
-    println(queryDatabase.getItem("Item1")?.location?.get(1))
+    println("Location of Item1: ${queryDatabase.getItem("Item1")?.location?.toList()}")
     commandHandler.moveItem("Item2", intArrayOf(1, 2, 0))
     // eventHandler.fetchEvent()
 
 
-    println(queryDatabase.getItem("Item1")?.location?.get(1))
-    println(queryDatabase.getItem("Item2")?.location?.get(1))
+    println("Location of Item1: ${queryDatabase.getItem("Item1")?.location?.toList()}")
+    println("Location of Item2: ${queryDatabase.getItem("Item2")?.location?.toList()}")
     commandHandler.moveItem("Item1", intArrayOf(1, 2, 0))
     //eventHandler.fetchEvent()
     //eventHandler.fetchEvent()
-    println(queryDatabase.getItem("Item1")?.location?.get(1))
-    println(queryDatabase.getItem("Item2")?.location?.get(1))
+    println("Location of Item1: ${queryDatabase.getItem("Item1")?.location?.toList()}")
+    println("Location of Item2: ${queryDatabase.getItem("Item2")?.location?.toList()}")
 
     commandHandler.changeValue("Item1", 5)
     //eventHandler.fetchEvent()
-    println(queryDatabase.getItem("Item1")?.value)
-    println(queryDatabase.getItem("Item2")?.moves)
+    println("Value of Item1 is: ${queryDatabase.getItem("Item1")?.value}")
+    println("Value of Item1 is: ${queryDatabase.getItem("Item2")?.value}")
 
     commandHandler.deleteItem("Item1")
     //eventHandler.fetchEvent()
-    println(queryDatabase.getItem("Item1")?.location?.get(1))
+    println("Location of Item1: ${queryDatabase.getItem("Item1")?.location?.toList()}")
 
     println("Average receive time: ${eventHandler.getAverageRecieveTime()}")
 

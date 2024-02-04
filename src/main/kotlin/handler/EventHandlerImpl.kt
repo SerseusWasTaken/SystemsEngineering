@@ -32,7 +32,7 @@ class EventHandlerImpl(
         val msg = consumer.receive()
         if (msg is TextMessage) {
             val timeToRecieve = System.currentTimeMillis() - msg.getLongProperty("timestamp")
-            println("Recieved msg: ${msg.text.deserializeToEvent()} and timestamp: $timeToRecieve")
+            println("Recieved msg: ${msg.text.deserializeToEvent()} and time to recieve: $timeToRecieve")
             timestampList.add(timeToRecieve)
             handleEvent(msg.text.deserializeToEvent())
         }
