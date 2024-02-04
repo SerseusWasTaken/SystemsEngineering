@@ -33,19 +33,17 @@ fun main(args: Array<String>) = runBlocking {
         delay(1000)
         commandHandler.moveItem("Item1", intArrayOf(1,2,3))
         delay(1000)
-        println(queryDatabase.getItem("Item1")?.location?.toList())
+        println("Location if Item1: ${queryDatabase.getItem("Item1")?.location?.toList()}")
         delay(1000)
         commandHandler.moveItem("Item1", intArrayOf(1,2,3))
         delay(1000)
-        println(queryDatabase.getItem("Item1")?.location?.toList())
+        println("Location if Item1: ${queryDatabase.getItem("Item1")?.location?.toList()}")
         delay(1000)
         //Should result in a replace event
         commandHandler.createItem("Item2", intArrayOf(2,4,6), 0)
         delay(1000)
         //Expect null here
         println(queryDatabase.getItem("Item1")?.location?.toList())
-        delay(1000)
-        commandHandler.createItem("Item2", intArrayOf(2,4,7), 0)
         delay(1000)
         commandHandler.createItem("Item2", intArrayOf(2,4,7), 0)
     }

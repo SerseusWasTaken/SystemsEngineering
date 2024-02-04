@@ -34,7 +34,6 @@ class DomainModelImpl(
     private fun getAllEvents(): List<Event> {
         consumer.resetOffset()
         val events = consumer.getEvents()
-        println("All events: $events")
         return events
     }
 
